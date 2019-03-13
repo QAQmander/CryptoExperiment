@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from src.infrastructure.Euclid import gcd
+sys.path.append('..')
+from infrastructure.Euclid import gcd
 
 def affine_encode(key, plain):
     a, b = key
