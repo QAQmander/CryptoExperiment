@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import sys
+
+sys.path.append('..')
 from fractions import Fraction
-from src.infrastructure.Euclid import inv, gcd
+from infrastructure.Euclid import inv, gcd
+from random import sample
 
 
 class Matrix(object):
@@ -112,7 +115,7 @@ class Matrix(object):
         for i in range(self._n):
             for j in range(self._m):
                 now_mat[i][j] = self._mat[i][j].numerator * \
-                               inv(self._mat[i][j].denominator, 26) % 26
+                                inv(self._mat[i][j].denominator, 26) % 26
         return now_mat
 
     @property
@@ -128,7 +131,7 @@ class Matrix(object):
         return self._mat
 
 
-def check(key):    # check if det(key) and 26 are coprime
+def check(key):  # check if det(key) and 26 are coprime
     det = int(key.determinant())
     if gcd(det, 26).d != 1:
         return False
@@ -136,7 +139,7 @@ def check(key):    # check if det(key) and 26 are coprime
         return True
 
 
-def hill_encode_block(key, plain_block):    # matrix multiplication
+def hill_encode_block(key, plain_block):  # matrix multiplication
     vector = []
     for char in plain_block:
         vector.append([ord(char) - ord('a')])
@@ -158,7 +161,7 @@ def hill_encode(key, plain):
     return ''.join(cipher_blocks)
 
 
-def hill_decode_block(key, cipher_block):    # inv then matrix multiplication
+def hill_decode_block(key, cipher_block):  # inv then matrix multiplication
     key_inv = key.inv()
     vector = []
     for char in cipher_block:
@@ -178,22 +181,62 @@ def hill_decode(key, cipher):
     return ''.join(plain_blocks)
 
 
+def attack(plain, cipher):
+    length = len(plain)
+    plain += 'x' * (m - (length - 1) % m - 1)
+    length = len(plain)
+
+    plain_blocks = []
+    cipher_blocks = []
+    for i in range(length // m):
+        plain_blocks.append(plain[m * i: m * (i + 1)])
+        cipher_blocks.append(cipher[m * i: m * (i + 1)])
+
+    tot = 0
+    while True:
+        tot += 1
+        if tot == 1000000:
+            print('Error : Hill.attach -- something wrong')
+            exit(-1)
+        ls = sample(range(0, length // m), m)
+        mat = []
+        for i in range(m):
+            mat.append(list(map(lambda x: ord(plain_blocks[x][i]) - ord('a'), ls)))
+        mat = Matrix(mat)
+        if check(mat):
+            res = []
+            for i in range(m):
+                res.append(list(map(lambda x: ord(cipher_blocks[x][i]) - ord('a'), ls)))
+            res = Matrix(res)
+            # print(mat)
+            # print(res)
+            key = Matrix(res.mul(mat.inv()).to_mod26())
+            if hill_encode(key, plain) == cipher:
+                return key
+
+
 if __name__ == '__main__':
     flag = input('flag: ')
     m = int(input('m: '))
-    print('key matrix (m line, m items for each line):')
-    key = []
-    for i in range(m):
-        key.append(list(map(int, input().split())))
-    key = Matrix(key)
-    if not check(key):
-        print('Error : Hill -- key_matrix is not ok!!!')
-        exit(-1)
+    if flag != '-a':
+        print('key matrix (m line, m items for each line):')
+        key = []
+        for i in range(m):
+            key.append(list(map(int, input().split())))
+        key = Matrix(key)
+        if not check(key):
+            print('Error : Hill -- key_matrix is not ok!!!')
+            exit(-1)
 
-    #flag = sys.argv[1]
+    # flag = sys.argv[1]
     if flag == '-e':
         plain = input('plain ([m]): ')
         print('cipher: ' + hill_encode(key, plain))
     elif flag == '-d':
         cipher = input('cipher ([c]): ')
         print('plain: ' + hill_decode(key, cipher))
+    elif flag == '-a':
+        plain = input('plain ([m]): ')
+        cipher = input('cipher ([c]): ')
+        key = attack(plain, cipher)
+        print(key)

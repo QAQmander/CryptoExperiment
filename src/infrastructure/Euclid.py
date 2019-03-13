@@ -55,6 +55,7 @@ def inv(a, b):
     if res.d != 1:
         print('Error : Euclid.inv -- %d and '
               '%d are not coprime' % (a, b))
+        exit(-1)
     return res.x
 
 
