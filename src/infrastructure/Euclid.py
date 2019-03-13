@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+class gcd_res(object):
+    def __init__(self, x, y, d):
+        self.x = x
+        self.y = y
+        self.d = d
+    def __getitem__(self, index):
+        if index == 0:
+            return self.x
+        elif index == 1:
+            return self.y
+        elif index == 2:
+            return self.d
+        else:
+            raise KeyError
+
 def gcd_increment(a, b):    # recursive, all saved
                             # int, int -> int, int, int
                             # a, b -> x, y, d : so that ax + by = d
@@ -23,7 +38,9 @@ def gcd_const(a, b):    # only last two steps saved
             #   always keep now_a = xa * ini_a + ya * ini_b
             #               now_b = xb * ini_a + yb * ini_b
         a, b = b, a % b
-    return xa, ya, a
+    return gcd_res(xa, ya, a)
+
+gcd = gcd_const
 
 if __name__ == '__main__':
     a, b = list(map(int, input().split()))

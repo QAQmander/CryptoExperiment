@@ -4,10 +4,20 @@
 import PrimeJudge
 fermat = lambda x: PrimeJudge.fermat(x, 100)
 
+def fai(p):
+    ret = p
+    for i in range(2, p + 1):
+        if p % i == 0:
+            ret -= ret // i
+    return ret
+
 def getPrimitiveRoot(p):
+    '''
     if not fermat(p):
         print('Error : PrimitiveRoot.getPrimitiveRoot -- not prime')
         return None
+    '''
+#faip = fai(p) #p - 1
     faip = p - 1
     for i in range(2, p - 1):
         now = 1
