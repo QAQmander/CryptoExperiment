@@ -3,7 +3,7 @@
 # base = 4  irre = 0b10011
 # base = 8  irre = 0b10000011
 
-class Polynomial2:
+class Polynomial2(object):    # GF2[x]
 
     def __init__(self, poly):
         self._poly = poly
@@ -37,7 +37,7 @@ class Polynomial2:
     def smallThan(self, other):
         return self._length < other._length
 
-    def div(self, other):
+    def div(self, other):    # divide with remainder
         if other.eq(Polynomial2(0)):
             print('Error : FiniteField.Polynomial2.div -- div ZERO')
             return None
@@ -49,7 +49,7 @@ class Polynomial2:
             r = r.sub(now.mul(other))
         return q, r
 
-    def gcd(a, b):
+    def gcd(a, b):    # return x, y, d s.t. ax+by=d
         a, b = a.copy(), b.copy()
         x1, y1 = Polynomial2(1), Polynomial2(0)
         x2, y2 = Polynomial2(0), Polynomial2(1)
@@ -66,7 +66,7 @@ class Polynomial2:
     def __repr__(self):
         return self.__str__()
 
-class GF24Object():
+class GF24Object(object):    # factor in GF(2^4)
 
     _irre = Polynomial2(0b10011)
 
@@ -88,7 +88,7 @@ class GF24Object():
     def eq(self, other):
         return self._poly.eq(other._poly)
 
-    def inv(self):
+    def inv(self):    # invert
         if self.eq(GF24Object(Polynomial2(0))):
             print('Error : FiniteField.GF24Object.inv -- require inv of ZERO')
             return None
@@ -104,7 +104,7 @@ class GF24Object():
     def __repr__(self):
         return self.__str__()
 
-class GF28Object():
+class GF28Object():    # GF(2^8)
 
     _irre = Polynomial2(0b111111001)
 
@@ -142,13 +142,13 @@ class GF28Object():
     def __repr__(self):
         return self.__str__()
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # little test
     for i in range(2 ** 8):
         now = GF28Object(i)
         inow = now.inv()
         if inow:
             print('{:50}{:50}{:50}'.format(str(now), str(inow), str(now.mul(inow))))
-    '''
+    ''' to find the irreducible polynomial
     for irre in range(2 ** 8):
         flag = True
         GF28Object._irre = Polynomial2(irre + 2 ** 8)

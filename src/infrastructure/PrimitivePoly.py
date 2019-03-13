@@ -5,7 +5,7 @@ from random import randint
 import PrimeJudge
 fermat = lambda x: PrimeJudge.fermat(x, 100)
 
-class Polynomial():
+class Polynomial():    # present Polynomial
 
     def __init__(self, coels):
         self._coels = coels
@@ -19,14 +19,22 @@ class Polynomial():
     def __repr__(self):
         return self.__str__()
 
-def generate(d, L, R):
+def generate(d, L, R):    # degree = d, [L, R]
     coels = [0] * (d + 1)
-    for i in range(d + 1):
-        while True:
-            b = randint(L, R)
-            if fermat(b) and not b in coels:
-                coels[i] = b
-                break
+    t = 0
+    while coels[0] == coels[1]:
+        if t == 100000:    # robust
+            print('Error : PrimitivePoly.generate ' \
+                '-- Something wrong')
+            exit(-1)
+        t += 1
+        coels = [0] * (d + 1)
+        for i in range(d + 1):
+            while True:    # generate prime in [L, R]
+                b = randint(L, R)
+                if fermat(b):
+                    coels[i] = b
+                    break
     return Polynomial(coels)
 
 if __name__ == '__main__':

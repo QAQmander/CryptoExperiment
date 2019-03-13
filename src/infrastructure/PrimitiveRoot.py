@@ -17,8 +17,8 @@ def getPrimitiveRoot(p):
         print('Error : PrimitiveRoot.getPrimitiveRoot -- not prime')
         return None
     '''
-#faip = fai(p) #p - 1
-    faip = p - 1
+    #faip = p - 1
+    faip = fai(p)
     for i in range(2, p - 1):
         now = 1
         flag = True
@@ -29,11 +29,16 @@ def getPrimitiveRoot(p):
                 break
         if flag:
             return i
+    return None
 
 if __name__ == '__main__':
     p = int(input())
     res = getPrimitiveRoot(p)
-    now = 1
-    for i in range(p - 2):
-        now = now * res % p
-        print(now, end=' ')
+    if res:
+        now = 1
+        for i in range(p - 2):
+            now = now * res % p
+            print(now, end=' ')
+        print()
+    else:
+        print('Error : no PrimitiveRoot for input')
