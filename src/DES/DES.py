@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from typing import List, Any
+
 __author__ = 'qaqmander'
 
 from functools import reduce
@@ -73,7 +75,7 @@ class DES(object):
         self.__key = key
 
     def _calculate_subkey_list(self, turn):
-        print(self.__key)
+        # print(self.__key)
         after_pc1 = self._pc1(self.__key)
         length = len(after_pc1)
         now_subkey_0, now_subkey_1 = after_pc1[:length // 2].copy(), after_pc1[length // 2:].copy()
@@ -84,7 +86,7 @@ class DES(object):
             # print(now_subkey_0)
             now_subkey_0, now_subkey_1 = map(
                 lambda key:
-                    ((key + key)[self._flag(turn_number):length // 2 + self._flag(turn_number)].copy()),
+                ((key + key)[self._flag(turn_number):length // 2 + self._flag(turn_number)].copy()),
                 (now_subkey_0, now_subkey_1)
             )
             # print(now_subkey_0)
@@ -93,16 +95,25 @@ class DES(object):
         return subkey_list
 
     def encrypt(self, plain, turn=16):
+        subkey_list = self._calculate_subkey_list(turn)
         length = len(plain)
-        after_p = self._p(plain)
+        after_ip = self._ip(plain)
+        all_res = [(after_ip[:length // 2], after_ip[length // 2:])]
+        for i in range(turn):
+            all_res.append(
+                (all_res[i][1], xor(all_res[i][0], self._p(self._s(xor(self._e(all_res[i][1]), subkey_list[i]))))))
         # Y combinator with currying
-        res = (lambda func: lambda lr: lambda turn_number: func(func)(lr)(turn_number))(
-            lambda func: lambda now_lr: lambda now_turn:
-            now_lr if now_turn == 0
+        after_turns = (lambda func: lambda lr: lambda turn_number: func(func)(lr)(turn_number))(
+            lambda func: lambda now_lr: lambda turn_number:
+            now_lr if turn_number == turn
             else (lambda next_lr: lambda new_turn: func(func)(next_lr)(new_turn))
-            ((now_lr[1], xor(now_lr[0], )))
-            (turn - 1)
-        )((after_p[:length // 2], after_p[length // 2:]))(turn)
+            ((now_lr[1], xor(now_lr[0],
+                             (lambda bin_list: lambda subkey: self._p(self._s(xor(self._e(bin_list.copy()), subkey))))
+                             (now_lr[1])
+                             (subkey_list[turn_number])
+                             )))(turn_number + 1)
+        )((after_ip[:length // 2], after_ip[length // 2:]))(0)
+        return self._ip_inv(after_turns[1] + after_turns[0])
 
 
 def get_everything_from_file(filename='DES.txt'):
@@ -130,8 +141,12 @@ if __name__ == '__main__':
     # print(_hex_str_to_bin_list('ffffaaaa', length=32))
     everything = get_everything_from_file()
     des = DES(*everything)
-    test_key = _hex_str_to_bin_list('133457799bbcdff1', length=64)
-    des.tell_me_the_devil_secret(test_key)
-    subkey_list = des._calculate_subkey_list(16)
-    for subkey in subkey_list:
-        print(''.join(map(str, subkey)))
+    key_hex_str = r'133457799BBCDFF1'
+    key = _hex_str_to_bin_list(key_hex_str, length=64)
+    des.tell_me_the_devil_secret(key)
+    plain_hex_str = r'0123456789ABCDEF'
+    plain = _hex_str_to_bin_list(plain_hex_str, length=64)
+    print(_bin_list_to_hex_str(des.encrypt(plain)))
+    # subkey_list = des._calculate_subkey_list(16)
+    # for subkey in subkey_list:
+    #     print(''.join(map(str, subkey)))
