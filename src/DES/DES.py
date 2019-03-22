@@ -78,30 +78,36 @@ class DES(object):
         # print(self.__key)
         after_pc1 = self._pc1(self.__key)
         length = len(after_pc1)
-        now_subkey_0, now_subkey_1 = after_pc1[:length // 2].copy(), after_pc1[length // 2:].copy()
-        subkey_list = []
-        for turn_number in range(turn):
-            # print(self._flag(turn_number))
-            # print(len(nowkey_0), len(nowkey_1))
-            # print(now_subkey_0)
-            now_subkey_0, now_subkey_1 = map(
-                lambda key:
-                ((key + key)[self._flag(turn_number):length // 2 + self._flag(turn_number)].copy()),
-                (now_subkey_0, now_subkey_1)
-            )
-            # print(now_subkey_0)
-            # print(len(nowkey_0), len(nowkey_1))
-            subkey_list.append(self._pc2(now_subkey_0.copy() + now_subkey_1.copy()))
+        # now_subkey_0, now_subkey_1 = after_pc1[:length // 2].copy(), after_pc1[length // 2:].copy()
+        # subkey_list = []
+        subkey_list = (lambda func: lambda now_subkey: lambda turn_number: func(func)(now_subkey)(turn_number)) \
+            (lambda func: lambda now_subkey: lambda turn_number:
+            [] if turn_number == turn else
+            (lambda next_subkey: ([next_subkey] + func(func)(now_subkey)(turn_number + 1)))
+                (reduce(
+                lambda x: lambda y: x + y,
+                map(lambda key: ((key + key)[self._flag(turn_number):length // 2 + self._flag(turn_number)]),
+                    now_subkey),
+                []
+            ))
+             )((after_pc1[:length // 2].copy(), after_pc1[length // 2:].copy()))(0)
+        # for turn_number in range(turn):
+        #     now_subkey_0, now_subkey_1 = map(
+        #         lambda key:
+        #         ((key + key)[self._flag(turn_number):length // 2 + self._flag(turn_number)].copy()),
+        #         (now_subkey_0, now_subkey_1)
+        #     )
+        #     subkey_list.append(self._pc2(now_subkey_0.copy() + now_subkey_1.copy()))
         return subkey_list
 
     def encrypt(self, plain, turn=16):
         subkey_list = self._calculate_subkey_list(turn)
         length = len(plain)
         after_ip = self._ip(plain)
-        all_res = [(after_ip[:length // 2], after_ip[length // 2:])]
-        for i in range(turn):
-            all_res.append(
-                (all_res[i][1], xor(all_res[i][0], self._p(self._s(xor(self._e(all_res[i][1]), subkey_list[i]))))))
+        # all_res = [(after_ip[:length // 2], after_ip[length // 2:])]
+        # for i in range(turn):
+        #     all_res.append(
+        #         (all_res[i][1], xor(all_res[i][0], self._p(self._s(xor(self._e(all_res[i][1]), subkey_list[i]))))))
         # Y combinator with currying
         after_turns = (lambda func: lambda lr: lambda turn_number: func(func)(lr)(turn_number))(
             lambda func: lambda now_lr: lambda turn_number:
