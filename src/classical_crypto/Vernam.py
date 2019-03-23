@@ -4,9 +4,11 @@
 import sys
 from itertools import cycle
 
+
 def vernam_encode(key, plain):
     fun = lambda x, y: '0' if x == y else '1'
     return ''.join(map(fun, cycle(key), plain))
+
 
 vernam_decode = vernam_encode
 
@@ -20,4 +22,3 @@ if __name__ == '__main__':
     elif flag == '-d':
         cipher = input('cipher ([c]): ')
         print('plain: ' + vernam_decode(key, cipher))
-

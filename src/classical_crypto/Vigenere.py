@@ -4,13 +4,16 @@
 import sys
 from itertools import cycle
 
+
 def vigenere_encode(key, plain):
     fun = lambda x, y: chr((ord(x) + ord(y) - 2 * ord('a')) % 26 + ord('a'))
     return ''.join(map(fun, cycle(key), plain))
 
+
 def vigenere_decode(key, cipher):
     fun = lambda x, y: chr((ord(y) - ord(x) + 26) % 26 + ord('a'))
     return ''.join(map(fun, cycle(key), cipher))
+
 
 if __name__ == '__main__':
     key = input('key ([keyword]): ')

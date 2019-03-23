@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
-
-sys.path.append('..')
 from fractions import Fraction
-from infrastructure.Euclid import inv, gcd
+from src.infrastructure.Euclid import inv, gcd
 from random import sample
 
 

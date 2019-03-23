@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import PrimeJudge
-fermat = lambda x: PrimeJudge.fermat(x, 100)
+import src.infrastructure.PrimeJudge
+
+fermat = lambda x: src.infrastructure.PrimeJudge.fermat(x, 100)
+
 
 def fai(p):
     ret = p
@@ -11,13 +13,14 @@ def fai(p):
             ret -= ret // i
     return ret
 
+
 def getPrimitiveRoot(p):
     '''
     if not fermat(p):
         print('Error : PrimitiveRoot.getPrimitiveRoot -- not prime')
         return None
     '''
-    #faip = p - 1
+    # faip = p - 1
     faip = fai(p)
     for i in range(2, p - 1):
         now = 1
@@ -30,6 +33,7 @@ def getPrimitiveRoot(p):
         if flag:
             return i
     return None
+
 
 if __name__ == '__main__':
     p = int(input())
