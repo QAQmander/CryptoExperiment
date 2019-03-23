@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from typing import List, Any
-
 __author__ = 'qaqmander'
 
 from functools import reduce
@@ -119,6 +117,7 @@ class DES(object):
 
 
 def get_everything_from_file(filename='DES.txt'):
+
     def get_two_lines_to_list(f, offset=0):
         return f.readline() and list(map(lambda x: int(x) + offset, f.readline().strip().split(',')))
 
