@@ -7,8 +7,8 @@ __author__ = 'qaqmander'
 from functools import reduce
 
 
-def _bin_list_to_hex_str(bin_list):
-    return hex(_bin_list_to_num(bin_list))[2:]
+def _bin_list_to_hex_str(bin_list, length):
+    return hex(_bin_list_to_num(bin_list))[2:].rjust(length, '0')
 
 
 def _hex_str_to_bin_list(hex_string, length):
@@ -28,28 +28,34 @@ def xor(bin_list_0, bin_list_1):
 
 
 class DES(object):
+
     # to create closure without mutable arg object
-    def __init__(self, ip, ip_inv, e, p, s, pc1, pc2, flag, length=64, s_box_output_length=4):
-        self._ip = (lambda closure_ip: lambda xs: [xs[index] for index in closure_ip])(ip.copy())
+    def __init__(self, ip, ip_inv, e, p, s, pc1, pc2, flag, s_box_input_length=6, s_box_output_length=4):
+
+        # return (lambda closure_table: lambda xs: [xs[index] for index in closure_table])(order_number_table.copy())
+        def get_map_from_order_number_table(order_number_table):
+            return (lambda closure_table: lambda xs:
+                    list(map(lambda index: xs[order_number_table[index]], range(len(order_number_table)))))(
+                order_number_table.copy)
+
+        self._ip = get_map_from_order_number_table(ip)
         if not ip_inv:
-            ip_inv = [ip.find(index) for index in range(length)]
-        self._ip_inv = (lambda closure_ip_inv: lambda bin_list: [bin_list[index] for index in closure_ip_inv]) \
-            (ip_inv.copy())
-        self._e = (lambda closure_e: lambda bin_list: [bin_list[index] for index in closure_e])(e)
-        self._p = (lambda closure_p: lambda bin_list: [bin_list[index] for index in closure_p])(p)
+            ip_inv = list(map(lambda index: ip.index(index), range(len(ip))))
+        self._ip_inv = get_map_from_order_number_table(ip_inv)
+        self._e = get_map_from_order_number_table(e)
+        self._p = get_map_from_order_number_table(p)
         self._temp_s = list(map(
             (lambda si:
              (lambda bin_list:
-              ((lambda table_number, bin_list_middle:
+              ((lambda table_number: lambda bin_list_middle:
                 _num_to_bin_list(
                     si[table_number * 2 ** s_box_output_length + _bin_list_to_num(bin_list_middle)],
                     length=s_box_output_length
                 )
-                )(_bin_list_to_num([bin_list[0], bin_list[-1]]), bin_list[1:-1]))
+                )(_bin_list_to_num([bin_list[0], bin_list[-1]]))(bin_list[1:-1]))
               )
              ),
             map(lambda x: x.copy(), s)))
-        s_box_input_length = s_box_output_length + 2
         self._s = lambda bin_list: reduce(
             lambda ls0, ls1: list.extend(ls0, ls1) or ls0,
             (lambda bin_list_slice_list: map(lambda func, x: func(x), self._temp_s, bin_list_slice_list))(
@@ -62,13 +68,10 @@ class DES(object):
             ),
             []
         )
-        # test = [1, 1, 1, 1, 1, 1] * 8
-        # print((self._s(test)))
-        self._pc1 = (lambda closure_pc1: lambda bin_list: [bin_list[index] for index in closure_pc1])(pc1)
-        self._pc2 = (lambda closure_pc2: lambda bin_list: [bin_list[index] for index in closure_pc2])(pc2)
-        # unnecessary but cool
-        self._flag = (lambda closure_flag: lambda turn_number: closure_flag[turn_number])(flag)
-        self.__key = None  # SECRET!!!
+        self._pc1 = get_map_from_order_number_table(pc1)
+        self._pc2 = get_map_from_order_number_table(pc2)
+        self._flag = (lambda closure_flag: lambda turn_number: closure_flag[turn_number])(flag) # unnecessary but cool
+        self.__key = None    # SECRET!!!
         self._subkey_list = None
 
     def tell_me_the_devil_secret(self, key):
@@ -78,36 +81,21 @@ class DES(object):
         # print(self.__key)
         after_pc1 = self._pc1(self.__key)
         length = len(after_pc1)
-        # now_subkey_0, now_subkey_1 = after_pc1[:length // 2].copy(), after_pc1[length // 2:].copy()
-        # subkey_list = []
-        subkey_list = (lambda func: lambda now_subkey: lambda turn_number: func(func)(now_subkey)(turn_number)) \
-            (lambda func: lambda now_subkey: lambda turn_number:
-            [] if turn_number == turn else
-            (lambda next_subkey: ([next_subkey] + func(func)(now_subkey)(turn_number + 1)))
-                (reduce(
-                lambda x: lambda y: x + y,
-                map(lambda key: ((key + key)[self._flag(turn_number):length // 2 + self._flag(turn_number)]),
-                    now_subkey),
-                []
-            ))
+        subkey_list = (lambda func: lambda now_subkey_lr: lambda turn_number: func(func)(now_subkey_lr)(turn_number)) \
+            (lambda func: lambda now_subkey_lr: lambda turn_number:
+                [] if turn_number == turn else
+                (lambda next_subkey_lr:
+                 [self._pc2(next_subkey_lr[0] + next_subkey_lr[1])] + func(func)(next_subkey_lr)(turn_number + 1))
+                (tuple(map(
+                    lambda key: ((key + key)[self._flag(turn_number):length // 2 + self._flag(turn_number)]),
+                    now_subkey_lr
+                )))
              )((after_pc1[:length // 2].copy(), after_pc1[length // 2:].copy()))(0)
-        # for turn_number in range(turn):
-        #     now_subkey_0, now_subkey_1 = map(
-        #         lambda key:
-        #         ((key + key)[self._flag(turn_number):length // 2 + self._flag(turn_number)].copy()),
-        #         (now_subkey_0, now_subkey_1)
-        #     )
-        #     subkey_list.append(self._pc2(now_subkey_0.copy() + now_subkey_1.copy()))
         return subkey_list
 
-    def encrypt(self, plain, turn=16):
-        subkey_list = self._calculate_subkey_list(turn)
-        length = len(plain)
-        after_ip = self._ip(plain)
-        # all_res = [(after_ip[:length // 2], after_ip[length // 2:])]
-        # for i in range(turn):
-        #     all_res.append(
-        #         (all_res[i][1], xor(all_res[i][0], self._p(self._s(xor(self._e(all_res[i][1]), subkey_list[i]))))))
+    def _do_something_with_facilities(self, subkey_list, something_great, turn):
+        length = len(something_great)
+        after_ip = self._ip(something_great)
         # Y combinator with currying
         after_turns = (lambda func: lambda lr: lambda turn_number: func(func)(lr)(turn_number))(
             lambda func: lambda now_lr: lambda turn_number:
@@ -120,6 +108,14 @@ class DES(object):
                              )))(turn_number + 1)
         )((after_ip[:length // 2], after_ip[length // 2:]))(0)
         return self._ip_inv(after_turns[1] + after_turns[0])
+
+    def encrypt(self, plain, turn=16):
+        encrypt_subkey_list = self._calculate_subkey_list(turn)
+        return self._do_something_with_facilities(encrypt_subkey_list, plain, turn)
+
+    def decipher(self, cipher, turn=16):
+        dicipher_subkey_list = self._calculate_subkey_list(turn)
+        return self._do_something_with_facilities(dicipher_subkey_list.reverse() or dicipher_subkey_list, cipher, turn)
 
 
 def get_everything_from_file(filename='DES.txt'):
@@ -141,18 +137,14 @@ def get_everything_from_file(filename='DES.txt'):
 
 
 if __name__ == '__main__':
-    # print(_bin_list_to_num([1, 0, 1]))
-    # print(_num_to_bin_list(64, length=32))
-    # print(_bin_list_to_hex_str([1, 1, 1, 1, 0, 0, 1, 1]))
-    # print(_hex_str_to_bin_list('ffffaaaa', length=32))
     everything = get_everything_from_file()
     des = DES(*everything)
     key_hex_str = r'133457799BBCDFF1'
     key = _hex_str_to_bin_list(key_hex_str, length=64)
     des.tell_me_the_devil_secret(key)
     plain_hex_str = r'0123456789ABCDEF'
-    plain = _hex_str_to_bin_list(plain_hex_str, length=64)
-    print(_bin_list_to_hex_str(des.encrypt(plain)))
-    # subkey_list = des._calculate_subkey_list(16)
-    # for subkey in subkey_list:
-    #     print(''.join(map(str, subkey)))
+    something_great = _hex_str_to_bin_list(plain_hex_str, length=64)
+    print(_bin_list_to_hex_str(des.encrypt(something_great), length=16))
+    cipher_hex_str = r'85e813540f0ab405'
+    something_bad = _hex_str_to_bin_list(cipher_hex_str, length=64)
+    print(_bin_list_to_hex_str(des.decipher(something_bad), length=16))
