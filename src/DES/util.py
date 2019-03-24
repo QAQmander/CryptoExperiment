@@ -39,6 +39,26 @@ def xor(bin_list_0, bin_list_1):
     return list(map(lambda x, y: x ^ y, bin_list_0, bin_list_1))
 
 
+def make_it_look_like_a_real_key_hex_str(fake_key_hex_str):
+    fake_key = hex_str_to_bin_list(fake_key_hex_str, length=64)
+    real_key = fake_key.copy()
+    for i in range(8):
+        xor_res = 0
+        for j in range(7):
+            xor_res ^= real_key[8 * i + j]
+        real_key[8 * i + 7] = 1 - xor_res
+    return bin_list_to_hex_str(real_key, length=16)
+
+def output6(bin_list):
+    length = len(bin_list)
+    print([bin_list_to_num(bin_list[6 * i: 6 * (i + 1)]) for i in range(length // 6)])
+
+
+def output4(bin_list):
+    length = len(bin_list)
+    print([bin_list_to_num(bin_list[4 * i: 4 * (i + 1)]) for i in range(length // 4)])
+
+
 def get_everything_from_file(filename=r'DES.txt'):
     def get_two_lines_to_list(f, offset=0):
         return f.readline() and list(map(lambda x: int(x) + offset, f.readline().strip().split(',')))

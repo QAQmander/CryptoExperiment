@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from typing import List, Any
-
 __author__ = 'qaqmander'
 
-from src.DES.DES import DES, get_everything_from_file
-from src.DES.util import *
 import pickle
+
+from src.DES.DES import DES
+from src.DES.util import *
 
 
 class Attacker(object):
@@ -19,6 +18,7 @@ class Attacker(object):
         self._l_and_r_dict_list = None
         self._difference_dict_list = None
         self._possible_key3_list = None
+        self.qaqmander = None    # result
         self._s_box_difference_dict_list = []
         if not filename:
             for index in range(8):
@@ -40,12 +40,6 @@ class Attacker(object):
         else:
             with open(filename, 'rb') as fr:
                 self._s_box_difference_dict_list = pickle.load(fr)
-        # print(self.des.temp_s[0](num_to_bin_list(25, 6)))
-        # print(self.des.temp_s[0](num_to_bin_list(25 ^ 52, 6)))
-        # print(self._s_box_difference_dict_list[0][52].get(9, None))
-        # for i in range(1 << 4):
-        #     print(i)
-        #     print(self._s_box_difference_dict_list[0][52].get(i, None))
 
     def read_plain_and_cipher_from_file(self, filename=r'plain_and_cipher.txt'):
 
@@ -75,6 +69,47 @@ class Attacker(object):
         self._calculate_l_and_r()
         self._calculate_difference()
         self._calculate_possible_key3_set()
+        # print(self._possible_key3_list)
+        key3_48 = []
+        for i in range(8):
+            key3_48.extend(num_to_bin_list(list(self._possible_key3_list[i])[0], length=6))
+        key_56_before_pc2 = [-1] * 56
+        pc2_list = self.des.source['pc2']
+        for i in range(48):
+            key_56_before_pc2[pc2_list[i]] = key3_48[i]
+        key_56 = []
+        key_56 += key_56_before_pc2[24:28]
+        key_56 += key_56_before_pc2[0:24]
+        key_56 += key_56_before_pc2[52:56]
+        key_56 += key_56_before_pc2[28:52]
+        test_plain = self.double_plain_and_cipher_list[0][0][0]
+        test_cipher = self.double_plain_and_cipher_list[0][0][1]
+        for i in range(1 << 8):
+            attempt_patch = num_to_bin_list(i, length=8)
+            attempt_key_56 = key_56.copy()
+            k = 0
+            for j in range(56):
+                if attempt_key_56[j] == -1:
+                    attempt_key_56[j] = attempt_patch[k]
+                    k += 1
+            attempt_key_64 = [-1] * 64
+            pc1_list = self.des.source['pc1']
+            # print(pc1_list)
+            for j in range(56):
+                attempt_key_64[pc1_list[j]] = attempt_key_56[j]
+            for j in range(8):
+                xor_res = 0
+                for k in range(7):
+                    xor_res ^= attempt_key_64[8 * j + k]
+                attempt_key_64[8 * j + 7] = 1 - xor_res
+            self.des.tell_me_the_devil_secret(attempt_key_64)
+            if self.des.encrypt(test_plain, turn=3) == test_cipher:
+                self.qaqmander = attempt_key_64
+                self.des.forget_the_devil_secret()
+                break
+            self.des.forget_the_devil_secret()
+        # print(bin_list_to_hex_str(self.qaqmander, length=16))
+        return self.qaqmander
 
     def _calculate_l_and_r(self):
         self._l_and_r_dict_list = []
@@ -96,11 +131,6 @@ class Attacker(object):
                         'plain': {'l': plain_l, 'r': plain_r},
                         'cipher': {'l': cipher_l, 'r': cipher_r}
                     }
-        # for l_and_r_dict in self._l_and_r_dict_list:
-        #     print(bin_list_to_hex_str(l_and_r_dict['normal']['plain']['l'], length=16),
-        #         l_and_r_dict['normal']['cipher'])
-        #     print(bin_list_to_hex_str(l_and_r_dict['star']['plain']['l'], length=16),
-        #         l_and_r_dict['star']['cipher'])
 
     def _calculate_difference(self):
         self._difference_dict_list = []
@@ -122,30 +152,24 @@ class Attacker(object):
                         )
                     )
                 )
-        # print(''.join(map(str, self._difference_dict_list[0]['e_normal'])))
-        # print(''.join(map(str, self._difference_dict_list[0]['e_star'])))
-        # print(''.join(map(str, self._difference_dict_list[0]['output'])))
 
     def _calculate_possible_key3_set(self):
         self._possible_key3_list = [set(range(1 << 6)) for i in range(8)]
         for index in range(len(self._difference_dict_list)):
             difference_dict = self._difference_dict_list[index]
+            e_normal_list = [bin_list_to_num(difference_dict['e_normal'][6 * i: 6 * (i + 1)]) for i in range(8)]
             input_difference = xor(difference_dict['e_normal'], difference_dict['e_star'])
             input_difference_num_list = [bin_list_to_num(input_difference[6 * i: 6 * (i + 1)]) for i in range(8)]
-            # print(input_difference_num_list)
             output_difference = difference_dict['output']
             output_difference_num_list = [bin_list_to_num(output_difference[4 * i: 4 * (i + 1)]) for i in range(8)]
-            # print(output_difference_num_list)
             for j in range(8):
                 possible_key3 = set(map(
-                    lambda possible_input_num: possible_input_num ^ input_difference_num_list[j],
+                    lambda possible_input_num: possible_input_num ^ e_normal_list[j],
                     self._s_box_difference_dict_list[j][input_difference_num_list[j]].get(output_difference_num_list[j],
                                                                                           set())
                 ))
-                print(index, j)
-                print(possible_key3)
                 self._possible_key3_list[j] = self._possible_key3_list[j].intersection(possible_key3)
-        print(self._possible_key3_list)
+        # print(self._possible_key3_list)
 
 
 def from_pdf_to_plain_and_cipher(des, input_filename=r'plain_and_cipher_from_pdf.txt', output_filename=r'plain_and'
@@ -168,25 +192,32 @@ def from_pdf_to_plain_and_cipher(des, input_filename=r'plain_and_cipher_from_pdf
 
 
 if __name__ == '__main__':
-    # test_key_hex_str = r'133457799BBCDFF1'
-    # r_hex_str = r'12345678'
-    # l_hex_str_list = [r'12345678', r'3456789a']  # , r'abcdef99']
-    # xor_res = r'deadbeef'
-    # des.tell_me_the_devil_secret(hex_str_to_bin_list(test_key_hex_str, length=64))
-    # with open(r'plain_and_cipher.txt', 'w') as fw:
-    #     for i in range(len(l_hex_str_list)):
-    #         l_hex_str = l_hex_str_list[i]
-    #         plain = des.ip_inv(hex_str_to_bin_list(l_hex_str + r_hex_str, length=64))
-    #         cipher = des.encrypt(plain, turn=3)
-    #         fw.write(bin_list_to_hex_str(plain, length=16) + ' ' + bin_list_to_hex_str(cipher, length=16) + '\n')
-    #         plain_star = xor(plain, hex_str_to_bin_list(xor_res, length=64))
-    #         cipher_star = des.encrypt(plain_star, turn=3)
-    #         fw.write(
-    #             bin_list_to_hex_str(plain_star, length=16) + ' ' + bin_list_to_hex_str(cipher_star, length=16) + '\n')
-    # des.forget_the_devil_secret()
     everything = get_everything_from_file()
     des = DES(*everything)
-    from_pdf_to_plain_and_cipher(des)
+    test_key_hex_str = make_it_look_like_a_real_key_hex_str(r'fafafafa12345678')
+    print('test_key_hex_str  : ' + test_key_hex_str)
+    # print(hex_str_to_bin_list(test_key_hex_str, length=64))
+    # print(des.pc1(hex_str_to_bin_list(test_key_hex_str, length=64)))
+    l_hex_str_list = [r'12345678', r'3456789a', r'12345678', r'3456789a', r'87654321', r'bcbc1245']
+    r_hex_str_list = [r'deadbeef', r'cafebabe', r'abcd1234']
+    des.tell_me_the_devil_secret(hex_str_to_bin_list(test_key_hex_str, length=64))
+
+    with open(r'plain_and_cipher.txt', 'w') as fw:
+        for i in range(len(r_hex_str_list)):
+            l_hex_str = l_hex_str_list[2 * i]
+            r_hex_str = r_hex_str_list[i]
+            plain = des.ip_inv(hex_str_to_bin_list(l_hex_str + r_hex_str, length=64))
+            cipher = des.encrypt(plain, turn=3)
+            fw.write(bin_list_to_hex_str(plain, length=16) + ' ' + bin_list_to_hex_str(cipher, length=16) + '\n')
+            l_hex_str = l_hex_str_list[2 * i + 1]
+            r_hex_str = r_hex_str_list[i]
+            plain = des.ip_inv(hex_str_to_bin_list(l_hex_str + r_hex_str, length=64))
+            cipher = des.encrypt(plain, turn=3)
+            fw.write(bin_list_to_hex_str(plain, length=16) + ' ' + bin_list_to_hex_str(cipher, length=16) + '\n')
+    des.forget_the_devil_secret()
+    # from_pdf_to_plain_and_cipher(des)
     attacker = Attacker(des, filename=r's_box_difference_dict_list')
     attacker.read_plain_and_cipher_from_file()
     attacker.attack()
+    print('attacker.qaqmander: ' + bin_list_to_hex_str(attacker.qaqmander, length=16))
+    assert test_key_hex_str == bin_list_to_hex_str(attacker.qaqmander, length=16)
