@@ -16,7 +16,7 @@ class DES(object):
         self.ip_inv = get_map_from_order_number_table(ip_inv)
         self.e = get_map_from_order_number_table(e)
         self.p = get_map_from_order_number_table(p)
-        self._temp_s = list(map(
+        self.temp_s = list(map(
             (lambda si:
              (lambda bin_list:
               ((lambda table_number: lambda bin_list_middle:
@@ -30,7 +30,7 @@ class DES(object):
             map(lambda x: x.copy(), s)))
         self.s = lambda bin_list: reduce(
             lambda ls0, ls1: list.extend(ls0, ls1) or ls0,
-            (lambda bin_list_slice_list: map(lambda func, x: func(x), self._temp_s, bin_list_slice_list))(
+            (lambda bin_list_slice_list: map(lambda func, x: func(x), self.temp_s, bin_list_slice_list))(
                 (lambda func: lambda now_bin_list: func(func)(now_bin_list))(
                     lambda func: lambda now_bin_list:
                     [] if not now_bin_list
