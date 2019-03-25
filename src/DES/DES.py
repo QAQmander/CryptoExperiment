@@ -116,7 +116,7 @@ class DES(object):
         encrypt_subkey_list = self._calculate_subkey_list(turn)
         return self._do_something_with_facilities(encrypt_subkey_list, plain, turn)
 
-    def decipher(self, cipher, turn=16):
+    def decrypt(self, cipher, turn=16):
         dicipher_subkey_list = self._calculate_subkey_list(turn)
         return self._do_something_with_facilities(dicipher_subkey_list.reverse() or dicipher_subkey_list, cipher, turn)
 
@@ -132,4 +132,4 @@ if __name__ == '__main__':
     print(bin_list_to_hex_str(des.encrypt(something_great), length=16))
     cipher_hex_str = r'85e813540f0ab405'
     something_bad = hex_str_to_bin_list(cipher_hex_str, length=64)
-    print(bin_list_to_hex_str(des.decipher(something_bad), length=16))
+    print(bin_list_to_hex_str(des.decrypt(something_bad), length=16))
