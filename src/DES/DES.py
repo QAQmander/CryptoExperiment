@@ -66,6 +66,7 @@ class DES(object):
         # print(self.__key)
         after_pc1 = self.pc1(self.__key)
         length = len(after_pc1)
+        # Y combinator with currying
         subkey_list = (lambda func: lambda now_subkey_lr: lambda turn_number: func(func)(now_subkey_lr)(turn_number)) \
             (lambda func: lambda now_subkey_lr: lambda turn_number:
             [] if turn_number == turn else
@@ -93,23 +94,6 @@ class DES(object):
                              )))(turn_number + 1)
         )((after_ip[:length // 2], after_ip[length // 2:]))(0)
 
-        # before_turn = (after_ip[:length // 2], after_ip[length // 2:])
-
-        # def feistel(r, subkey):
-        #     nonlocal i
-        #     if i == 2:
-        #         print('subkey  :', [bin_list_to_num(subkey[6 * i: 6 * (i + 1)]) for i in range(8)])
-        #         input = xor(self.e(r), subkey)
-        #     return self.p(self.s(xor(self.e(r), subkey)))
-
-        # for i in range(turn):
-        #     now_l = before_turn[1]
-        #     now_r = xor(before_turn[0], feistel(before_turn[1], subkey_list[i]))
-        #     before_turn = (now_l, now_r)
-        # after_turns = before_turn
-
-        # print(bin_list_to_hex_str(after_turns[0], length=16))
-        # print(bin_list_to_hex_str(after_turns[1], length=16))
         return self.ip_inv(after_turns[1] + after_turns[0])
 
     def encrypt(self, plain, turn=16):
