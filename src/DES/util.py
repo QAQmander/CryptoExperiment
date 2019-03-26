@@ -49,6 +49,7 @@ def make_it_look_like_a_real_key_hex_str(fake_key_hex_str):
         real_key[8 * i + 7] = 1 - xor_res
     return bin_list_to_hex_str(real_key, length=16)
 
+
 def output6(bin_list):
     length = len(bin_list)
     print([bin_list_to_num(bin_list[6 * i: 6 * (i + 1)]) for i in range(length // 6)])
