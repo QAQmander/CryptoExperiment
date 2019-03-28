@@ -13,9 +13,8 @@ class TripleDES(object):
         self._des2 = DES(*everything)
 
     def tell_me_the_devil_secret(self, key):
-        print(key)
-        self._des1.tell_me_the_devil_secret(key[:64])
-        self._des2.tell_me_the_devil_secret(key[64:])
+        self._des1.tell_me_the_devil_secret(key[:64].copy())
+        self._des2.tell_me_the_devil_secret(key[64:].copy())
 
     def forget_the_devil_secret(self):
         self._des2.forget_the_devil_secret()

@@ -36,7 +36,7 @@ class SDES(object):
         self.__key = None
 
     def tell_me_the_devil_secret(self, key):
-        self.__key = key
+        self.__key = key.copy()
 
     def forget_the_devil_secret(self):
         self.__key = None
@@ -63,10 +63,10 @@ class SDES(object):
         after_e = self.e(plain)
         after_xor = xor(after_e, subkey)
         left, right = after_xor[:4], after_xor[4:]
-        print(left, right)
+        # print(left, right)
         left = num_to_bin_list(self.s[0](left), length=2)
         right = num_to_bin_list(self.s[1](right), length=2)
-        print(left, right)
+        # print(left, right)
         after_s = left + right
         after_p = self.p(after_s)
         return after_p
@@ -103,5 +103,13 @@ def get_everything_from_file(filename=r'SDES.txt'):
 if __name__ == '__main__':
     everything = get_everything_from_file()
     sdes = SDES(*everything)
-    sdes.tell_me_the_devil_secret(num_to_bin_list(int('1010000010', 2), length=10))
-    print(sdes.encrypt(hex_str_to_bin_list('dd', length=8)))
+    test_key1 = num_to_bin_list(int('1010000010', 2), length=10)
+    test_key2 = num_to_bin_list(int('0101010101', 2), length=10)
+    sdes.tell_me_the_devil_secret(test_key1)
+    plain = hex_str_to_bin_list('dd', length=8)
+    print(plain)
+    cipher = sdes.encrypt(plain)
+    print(cipher)
+    new_plain = sdes.decrypt(cipher)
+    print(new_plain)
+

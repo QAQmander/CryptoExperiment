@@ -57,7 +57,7 @@ class DES(object):
         }
 
     def tell_me_the_devil_secret(self, key):
-        self.__key = key
+        self.__key = key.copy()
 
     def forget_the_devil_secret(self):
         self.__key = None
