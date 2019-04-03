@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # base = 4  irre = 0b10011
-# base = 8  irre = 0b10000011
+# base = 8  irre = 0b100011011
 
-class Polynomial2(object):    # GF2[x]
+
+class Polynomial2(object):  # GF2[x]
 
     def __init__(self, poly):
         self._poly = poly
@@ -37,7 +38,7 @@ class Polynomial2(object):    # GF2[x]
     def smallThan(self, other):
         return self._length < other._length
 
-    def div(self, other):    # divide with remainder
+    def div(self, other):  # divide with remainder
         if other.eq(Polynomial2(0)):
             print('Error : FiniteField.Polynomial2.div -- div ZERO')
             return None
@@ -49,7 +50,7 @@ class Polynomial2(object):    # GF2[x]
             r = r.sub(now.mul(other))
         return q, r
 
-    def gcd(a, b):    # return x, y, d s.t. ax+by=d
+    def gcd(a, b):  # return x, y, d s.t. ax+by=d
         a, b = a.copy(), b.copy()
         x1, y1 = Polynomial2(1), Polynomial2(0)
         x2, y2 = Polynomial2(0), Polynomial2(1)
@@ -60,13 +61,17 @@ class Polynomial2(object):    # GF2[x]
             a, b = b, r
         return x1, y1, a
 
+    def __int__(self):
+        return self._poly
+
     def __str__(self):
         return 'Polynomial2( {} )'.format(' '.join(list(bin(self._poly)[2:])))
 
     def __repr__(self):
         return self.__str__()
 
-class GF24Object(object):    # factor in GF(2^4)
+
+class GF24Object(object):  # factor in GF(2^4)
 
     _irre = Polynomial2(0b10011)
 
@@ -88,7 +93,7 @@ class GF24Object(object):    # factor in GF(2^4)
     def eq(self, other):
         return self._poly.eq(other._poly)
 
-    def inv(self):    # invert
+    def inv(self):  # invert
         if self.eq(GF24Object(Polynomial2(0))):
             print('Error : FiniteField.GF24Object.inv -- require inv of ZERO')
             return None
@@ -104,9 +109,11 @@ class GF24Object(object):    # factor in GF(2^4)
     def __repr__(self):
         return self.__str__()
 
-class GF28Object():    # GF(2^8)
 
-    _irre = Polynomial2(0b111111001)
+class GF28Object(object):  # GF(2^8)
+
+    # _irre = Polynomial2(0b111111001)
+    _irre = Polynomial2(0b100011011)
 
     def __init__(self, poly):
         if isinstance(poly, Polynomial2):
@@ -136,11 +143,15 @@ class GF28Object():    # GF(2^8)
     def div(self, other):
         return GF28Object(self._poly_mul(other.inv()))
 
+    def __int__(self):
+        return self._poly.__int__()
+
     def __str__(self):
         return 'GF28Object( {} )'.format(self._poly.__str__())
 
     def __repr__(self):
         return self.__str__()
+
 
 if __name__ == '__main__':  # little test
     for i in range(2 ** 8):

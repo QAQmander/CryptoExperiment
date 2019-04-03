@@ -3,6 +3,7 @@
 __author__ = 'qaqmander'
 
 from src.DES.util import *
+from src.infrastructure.util import *
 
 
 class SDES(object):

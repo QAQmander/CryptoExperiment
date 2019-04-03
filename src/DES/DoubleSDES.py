@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 __author__ = 'qaqmander'
 
-from src.DES.util import *
+from src.infrastructure.util import *
 from src.DES.SDES import SDES, get_everything_from_file
 
 
