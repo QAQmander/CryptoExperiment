@@ -7,11 +7,11 @@ def bin_list_to_hex_str(bin_list, length):
 
 
 def hex_str_to_bin_list(hex_string, length):
-    return num_to_bin_list(int(hex_string, 16), length)
+    return num_to_bin_list(int('0' + hex_string, 16), length)
 
 
 def bin_list_to_num(bin_list):
-    return int(''.join(map(str, bin_list)), 2)
+    return int('0' + ''.join(map(str, bin_list)), 2)
 
 
 def num_to_bin_list(num, length):

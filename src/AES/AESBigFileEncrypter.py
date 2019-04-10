@@ -40,7 +40,7 @@ class AESBigFileEncrypter(object):
             turns = 16 - len(plain_byte_list) % 16
             plain_byte_list += [0xac] * (turns - 1)
             plain_byte_list.append(turns)
-            initial_vector = args[0]
+            initial_vector = bin_list_to_byte_list(args[0])
             for i in range(len(plain_byte_list) // 16):
                 if i == 0:
                     passed = initial_vector
@@ -49,8 +49,8 @@ class AESBigFileEncrypter(object):
                 now_bin_list = byte_list_to_bin_list(xor(plain_byte_list[16 * i: 16 * (i + 1)], passed))
                 cipher_byte_list.extend(bin_list_to_byte_list(self.aes.encrypt(now_bin_list)))
         elif model == Model.CFB:
-            k = args[0]
-            passed = byte_list_to_bin_list(args[1])
+            passed = args[0]
+            k = args[1]
             plain_bin_list = byte_list_to_bin_list(plain_byte_list)
             cipher_bin_list = []
             turns = int(ceil((len(plain_bin_list) / k)))
@@ -63,8 +63,8 @@ class AESBigFileEncrypter(object):
                 passed = (passed + now_bin_list)[k:]
             cipher_byte_list = bin_list_to_byte_list(cipher_bin_list)
         elif model == Model.OFB:
-            k = args[0]
-            passed = byte_list_to_bin_list(args[1])
+            passed = args[0]
+            k = args[1]
             plain_bin_list = byte_list_to_bin_list(plain_byte_list)
             cipher_bin_list = []
             turns = int(ceil((len(plain_bin_list) / k)))
@@ -80,7 +80,7 @@ class AESBigFileEncrypter(object):
             turns = 16 - len(plain_byte_list) % 16
             plain_byte_list += [0xac] * (turns - 1)
             plain_byte_list.append(turns)
-            counter = byte_list_to_num(args[0])
+            counter = bin_list_to_num(args[0])
             for i in range(len(plain_byte_list) // 16):
                 now_bin_list = byte_list_to_bin_list(plain_byte_list[16 * i: 16 * (i + 1)])
                 after_encrypt = self.aes.encrypt(num_to_bin_list(counter, length=128))
@@ -102,7 +102,7 @@ class AESBigFileEncrypter(object):
             num = plain_byte_list[-1]
             plain_byte_list = plain_byte_list[:-num]
         elif model == Model.CBC:
-            initial_vector = args[0]
+            initial_vector = bin_list_to_byte_list(args[0])
             for i in range(len(cipher_byte_list) // 16):
                 if i == 0:
                     passed = initial_vector
@@ -113,8 +113,8 @@ class AESBigFileEncrypter(object):
             num = plain_byte_list[-1]
             plain_byte_list = plain_byte_list[:-num]
         elif model == Model.CFB:
-            k = args[0]
-            passed = byte_list_to_bin_list(args[1])
+            passed = args[0]
+            k = args[1]
             cipher_bin_list = byte_list_to_bin_list(cipher_byte_list)
             plain_bin_list = []
             turns = int(ceil((len(cipher_bin_list) / k)))
@@ -127,8 +127,8 @@ class AESBigFileEncrypter(object):
                 plain_bin_list.extend(now_bin_list)
             plain_byte_list = bin_list_to_byte_list(plain_bin_list)
         elif model == Model.OFB:
-            k = args[0]
-            passed = byte_list_to_bin_list(args[1])
+            passed = args[0]
+            k = args[1]
             cipher_bin_list = byte_list_to_bin_list(cipher_byte_list)
             plain_bin_list = []
             turns = int(ceil((len(cipher_bin_list) / k)))
@@ -141,7 +141,7 @@ class AESBigFileEncrypter(object):
                 plain_bin_list.extend(now_bin_list)
             plain_byte_list = bin_list_to_byte_list(plain_bin_list)
         elif model == Model.CTR:
-            counter = byte_list_to_num(args[0])
+            counter = bin_list_to_num(args[0])
             for i in range(len(cipher_byte_list) // 16):
                 now_bin_list = byte_list_to_bin_list(cipher_byte_list[16 * i: 16 * (i + 1)])
                 after_encrypt = self.aes.encrypt(num_to_bin_list(counter, length=128))
@@ -181,9 +181,9 @@ if __name__ == '__main__':
     aes_filer = AESBigFileEncrypter(AES(*everything))
     test_key_hex_str = 'deadbeefdeadbeefdeadbeefdeadbeef'
     test_initial_vector_hex_str = 'deadbeefdeadbeefdeadbeefdeadbeef'
-    test_initial_vector_byte_list = hex_str_to_byte_list(test_initial_vector_hex_str, length=16)
+    test_initial_vector_bin_list = hex_str_to_bin_list(test_initial_vector_hex_str, length=128)
     aes_filer.tell_me_the_devil_secret(hex_str_to_bin_list(test_key_hex_str, length=128))
-    aes_filer.encrypt_file('a.txt', Model.CTR, test_initial_vector_byte_list)
+    aes_filer.encrypt_file('a.txt', Model.CFB, test_initial_vector_bin_list, 10)
     print('encrypt succeed')
-    aes_filer.decrypt_file('a.txt.encrypt', Model.CTR, test_initial_vector_byte_list)
+    aes_filer.decrypt_file('a.txt.encrypt', Model.CFB, test_initial_vector_bin_list, 10)
     print('decrypt succeed')
