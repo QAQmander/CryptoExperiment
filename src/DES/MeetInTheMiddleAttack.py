@@ -67,6 +67,7 @@ if __name__ == '__main__':
     ret = attacker.attack()
     for item in ret:
         print(item)
+    print(len(ret))
     # key1, key2 = attacker.attack()
     # print(key1)
     # print(key2)

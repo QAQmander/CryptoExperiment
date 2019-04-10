@@ -44,12 +44,15 @@ class DoubleSDES(object):
 if __name__ == '__main__':
     everything = get_everything_from_file()
     dsdes = DoubleSDES(*everything)
-    test_key1 = num_to_bin_list(int('1010000010', 2), length=10)
-    test_key2 = num_to_bin_list(int('0111001110', 2), length=10)
+    test_key1 = num_to_bin_list(int('0111110000', 2), length=10)
+    test_key2 = num_to_bin_list(int('0101011111', 2), length=10)
     dsdes.tell_me_the_devil_secret(test_key1, test_key2)
-    plain = hex_str_to_bin_list('10', length=8)
-    print(bin_list_to_hex_str(plain, length=2))
-    cipher = dsdes.encrypt(plain)
-    print(bin_list_to_hex_str(cipher, length=2))
-    new_plain = dsdes.decrypt(cipher)
-    print(bin_list_to_hex_str(new_plain, length=2))
+    ls = ['ac', '11', 'fd', '12', '13']
+    for item in ls:
+        plain = hex_str_to_bin_list(item, length=8)
+        print(bin_list_to_hex_str(plain, length=2), end=' ')
+        cipher = dsdes.encrypt(plain)
+        print(bin_list_to_hex_str(cipher, length=2))
+        new_plain = dsdes.decrypt(cipher)
+        # print(bin_list_to_hex_str(new_plain, length=2))
+

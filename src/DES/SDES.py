@@ -107,10 +107,11 @@ if __name__ == '__main__':
     test_key1 = num_to_bin_list(int('1010000010', 2), length=10)
     test_key2 = num_to_bin_list(int('0101010101', 2), length=10)
     sdes.tell_me_the_devil_secret(test_key1)
-    plain = hex_str_to_bin_list('dd', length=8)
+    plain = hex_str_to_bin_list('13', length=8)
     print(plain)
     cipher = sdes.encrypt(plain)
     print(cipher)
+    print(bin_list_to_hex_str(cipher, length=2))
     new_plain = sdes.decrypt(cipher)
     print(new_plain)
 

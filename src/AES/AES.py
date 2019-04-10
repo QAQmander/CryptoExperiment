@@ -36,13 +36,13 @@ class AES(object):
                 self._cm_matrix_inv[i].append(GF28Object(self.src_cm_inv[i][j]))
 
     def tell_me_the_devil_secret(self, key):
-        self.__key = key.copy()
+        self.__key = bin_list_to_byte_list(key.copy())
 
     def forget_the_devil_secret(self):
         self.__key = None
 
     def encrypt(self, plain):
-        now = plain.copy()
+        now = bin_list_to_byte_list(plain.copy())
         self._calculate_subkey_list()
         now = self._subkey_add(now, self.subkey_list[0])
         for i in range(1, 10):
@@ -50,10 +50,10 @@ class AES(object):
         now = self._byte_substitute(now)
         now = self._row_shift(now)
         now = self._subkey_add(now, self.subkey_list[10])
-        return now
+        return byte_list_to_bin_list(now)
 
     def decrypt(self, cipher):
-        now = cipher.copy()
+        now = bin_list_to_byte_list(cipher.copy())
         self._calculate_subkey_list()
         now = self._subkey_add(now, self.subkey_list[10])
         for i in range(9, 0, -1):
@@ -62,7 +62,7 @@ class AES(object):
         now = self._row_shift(now, reverse=True)
         now = self._byte_substitute(now, reverse=True)
         now = self._subkey_add(now, self.subkey_list[0])
-        return now
+        return byte_list_to_bin_list(now)
 
     def _calculate_subkey_list(self):
         self.subkey_list = [self.__key]
@@ -111,17 +111,17 @@ class AES(object):
     def _row_shift(passed, reverse=False):
         if not reverse:
             return [
-                passed[0],  passed[5],  passed[10], passed[15],
-                passed[4],  passed[9],  passed[14], passed[3],
-                passed[8],  passed[13], passed[2],  passed[7],
-                passed[12], passed[1],  passed[6],  passed[11],
+                passed[0], passed[5], passed[10], passed[15],
+                passed[4], passed[9], passed[14], passed[3],
+                passed[8], passed[13], passed[2], passed[7],
+                passed[12], passed[1], passed[6], passed[11],
             ]
         else:
             return [
-                passed[0],  passed[13], passed[10], passed[7],
-                passed[4],  passed[1],  passed[14], passed[11],
-                passed[8],  passed[5],  passed[2],  passed[15],
-                passed[12], passed[9],  passed[6],  passed[3]
+                passed[0], passed[13], passed[10], passed[7],
+                passed[4], passed[1], passed[14], passed[11],
+                passed[8], passed[5], passed[2], passed[15],
+                passed[12], passed[9], passed[6], passed[3]
             ]
 
     @staticmethod
@@ -146,6 +146,7 @@ class AES(object):
         for i in range(len(passed)):
             now.append(passed[i] ^ subkey[i])
         return now
+
 
 def get_everything_from_file(filename=r'AES.txt'):
     s = []
@@ -187,12 +188,13 @@ if __name__ == '__main__':
     aes = AES(*everything)
     # key = hex_str_to_byte_list(r"2b7e151628aed2a6abf7158809cf4f3c")
     # plain = hex_str_to_byte_list(r"3243f6a8885a308d313198a2e0370734")
-    key = hex_str_to_byte_list(r"0f1571c947d9e8590cb7add6af7f6798")
-    plain = hex_str_to_byte_list(r"0123456789abcdeffedcba9876543210")
+    # key = hex_str_to_bin_list(r'0f1571c947d9e8590cb7add6af7f6798', length=128)
+    # plain = hex_str_to_bin_list(r'0123456789abcdeffedcba9876543210', length=128)
+    key = hex_str_to_bin_list(r'deadbeefdeadbeefdeadbeefdeadbeef', length=128)
+    plain = [0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1]
     aes.tell_me_the_devil_secret(key)
     cipher = aes.encrypt(plain)
     new_plain = aes.decrypt(cipher)
-    byte_list_output(plain)
-    byte_list_output(cipher)
-    byte_list_output(new_plain)
-
+    byte_list_output(bin_list_to_byte_list(plain))
+    byte_list_output(bin_list_to_byte_list(cipher))
+    byte_list_output(bin_list_to_byte_list(new_plain))

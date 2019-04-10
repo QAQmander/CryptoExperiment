@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from src.infrastructure.util import *
+
 __author__ = 'qaqmander'
 
 
@@ -10,8 +12,8 @@ def get_inv_from_order_number_list(order_number_list):
 # return (lambda closure_table: lambda xs: [xs[index] for index in closure_table])(order_number_table.copy())
 def get_map_from_order_number_table(order_number_table):
     return (lambda closure_table: lambda xs:
-    list(map(lambda index: xs[order_number_table[index]], range(len(order_number_table)))))(
-        order_number_table.copy)
+    list(map(lambda index: xs[closure_table[index]], range(len(closure_table)))))(
+        order_number_table.copy())
 
 
 def swap(bin_list):
