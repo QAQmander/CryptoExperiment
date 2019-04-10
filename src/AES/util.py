@@ -31,8 +31,16 @@ def bin_list_to_byte_list(bin_list):
     return temp
 
 
+def byte_list_to_num(byte_list):
+    return bin_list_to_num(byte_list_to_bin_list(byte_list))
+
+
 def xor(bin_list_1, bin_list_2):
-    ret = []
+    length = max(len(bin_list_1), len(bin_list_2))
+    ret = [0] * length
     for i in range(len(bin_list_1)):
-        ret.append(bin_list_1[i] ^ bin_list_2[i])
+        try:
+            ret[i] = bin_list_1[i] ^ bin_list_2[i]
+        except IndexError:
+            break
     return ret
