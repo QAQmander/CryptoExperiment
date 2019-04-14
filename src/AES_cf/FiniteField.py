@@ -99,7 +99,7 @@ class GF24Object(object):  # factor in GF(2^4)
             print('Error : FiniteField.GF24Object.inv -- require inv of ZERO')
             return None
         else:
-            return GF24Object(self._poly.gcd(GF24Object._irre)[0])
+            return GF24Object(self._poly.gcd(self._poly, GF24Object._irre)[0])
 
     def div(self, other):
         return GF24Object(self._poly.mul(other.inv()))
@@ -139,7 +139,7 @@ class GF28Object(object):  # GF(2^8)
             print('Error : GF28Object.inv -- require inv of ZERO')
             return None
         else:
-            return GF28Object(self._poly.gcd(GF28Object._irre)[0])
+            return GF28Object(self._poly.gcd(self._poly, GF28Object._irre)[0])
 
     def div(self, other):
         return GF28Object(self._poly.mul(other.inv()))

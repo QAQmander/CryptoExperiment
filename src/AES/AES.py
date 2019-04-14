@@ -186,6 +186,8 @@ def get_everything_from_file(filename=r'AES.txt'):
 if __name__ == '__main__':
     everything = get_everything_from_file()
     aes = AES(*everything)
+    print(num_to_bin_list(aes._s(10), length=8))
+    exit(0)
     # key = hex_str_to_byte_list(r"2b7e151628aed2a6abf7158809cf4f3c")
     # plain = hex_str_to_byte_list(r"3243f6a8885a308d313198a2e0370734")
     # key = hex_str_to_bin_list(r'0f1571c947d9e8590cb7add6af7f6798', length=128)
