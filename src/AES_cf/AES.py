@@ -10,11 +10,20 @@ from src.AES.util import *
 
 class AES(object):
 
-    def __init__(self, rc, column_mix):
+    def __init__(self, s, s_inv, rc, column_mix, column_mix_inv):
+        self.src_s = []
+        for item in s:
+            self.src_s.append(item.copy())
+        self.src_s_inv = []
+        for item in s_inv:
+            self.src_s_inv.append(item.copy())
         self.src_rc = rc.copy()
         self.src_cm = []
         for item in column_mix:
             self.src_cm.append(item.copy())
+        self.src_cm_inv = []
+        for item in column_mix_inv:
+            self.src_cm_inv.append(item.copy())
         self.__key = None
         self.subkey_list = None
         self._cm_matrix = []
@@ -22,6 +31,11 @@ class AES(object):
             self._cm_matrix.append([])
             for j in range(4):
                 self._cm_matrix[i].append(GF28Object(self.src_cm[i][j]))
+        self._cm_matrix_inv = []
+        for i in range(4):
+            self._cm_matrix_inv.append([])
+            for j in range(4):
+                self._cm_matrix_inv[i].append(GF28Object(self.src_cm_inv[i][j]))
 
     def tell_me_the_devil_secret(self, key):
         self.__key = bin_list_to_byte_list(key.copy())
@@ -38,6 +52,18 @@ class AES(object):
         now = self._byte_substitute(now)
         now = self._row_shift(now)
         now = self._subkey_add(now, self.subkey_list[10])
+        return byte_list_to_bin_list(now)
+
+    def decrypt(self, cipher):
+        now = bin_list_to_byte_list(cipher.copy())
+        self._calculate_subkey_list()
+        now = self._subkey_add(now, self.subkey_list[10])
+        for i in range(9, 0, -1):
+            now_subkey = self._column_mix(self.subkey_list[i], reverse=True)
+            now = self._do_one_turn(now, now_subkey, reverse=True)
+        now = self._row_shift(now, reverse=True)
+        now = self._byte_substitute(now, reverse=True)
+        now = self._subkey_add(now, self.subkey_list[0])
         return byte_list_to_bin_list(now)
 
     def _calculate_subkey_list(self):
@@ -60,43 +86,45 @@ class AES(object):
         return new_byte_4_list
 
     def _s(self, byte):
-        ob28 = GF28Object(byte)
-        m = Matrix([
-            [1, 0, 0, 0, 1, 1, 1, 1],
-            [1, 1, 0, 0, 0, 1, 1, 1],
-            [1, 1, 1, 0, 0, 0, 1, 1],
-            [1, 1, 1, 1, 0, 0, 0, 1],
-            [1, 1, 1, 1, 1, 0, 0, 0],
-            [0, 1, 1, 1, 1, 1, 0, 0],
-            [0, 0, 1, 1, 1, 1, 1, 0],
-            [0, 0, 0, 1, 1, 1, 1, 1]
-        ])
-        y = m.mul(Matrix([ob28.to_bin_list()]).translate()).translate().mat[0]
-        for i in [0, 1, 5, 6]:
-            y[i] = 1 - y[i]
-        return y
+        high = byte // 16
+        low = byte % 16
+        return self.src_s[high][low]
 
-    def _do_one_turn(self, passed, subkey):
-        now = self._byte_substitute(passed)
-        now = self._row_shift(now)
-        now = self._column_mix(now)
+    def _s_inv(self, byte):
+        high = byte // 16
+        low = byte % 16
+        return self.src_s_inv[high][low]
+
+    def _do_one_turn(self, passed, subkey, reverse=False):
+        now = self._byte_substitute(passed, reverse)
+        now = self._row_shift(now, reverse)
+        now = self._column_mix(now, reverse)
         now = self._subkey_add(now, subkey)
         return now
 
-    def _byte_substitute(self, passed):
+    def _byte_substitute(self, passed, reverse=False):
+        _s = self._s if not reverse else self._s_inv
         now = []
         for i in range(len(passed)):
-            now.append(self._s(passed[i]))
+            now.append(_s(passed[i]))
         return now
 
     @staticmethod
-    def _row_shift(passed):
-        return [
-            passed[0], passed[5], passed[10], passed[15],
-            passed[4], passed[9], passed[14], passed[3],
-            passed[8], passed[13], passed[2], passed[7],
-            passed[12], passed[1], passed[6], passed[11],
-        ]
+    def _row_shift(passed, reverse=False):
+        if not reverse:
+            return [
+                passed[0], passed[5], passed[10], passed[15],
+                passed[4], passed[9], passed[14], passed[3],
+                passed[8], passed[13], passed[2], passed[7],
+                passed[12], passed[1], passed[6], passed[11],
+            ]
+        else:
+            return [
+                passed[0], passed[13], passed[10], passed[7],
+                passed[4], passed[1], passed[14], passed[11],
+                passed[8], passed[5], passed[2], passed[15],
+                passed[12], passed[9], passed[6], passed[3]
+            ]
 
     @staticmethod
     def _matrix_mul(matrix, column):
@@ -107,16 +135,15 @@ class AES(object):
         ret = list(map(int, ret))
         return ret
 
-    def _column_mix(self, passed):
-        matrix = self._cm_matrix
+    def _column_mix(self, passed, reverse=False):
+        matrix = self._cm_matrix if not reverse else self._cm_matrix_inv
         now = []
         for i in range(4):
             column = list(map(lambda item: GF28Object(item), passed[4 * i: 4 * i + 4]))
             now += AES._matrix_mul(matrix, column)
         return now
 
-    @staticmethod
-    def _subkey_add(passed, subkey):
+    def _subkey_add(self, passed, subkey):
         now = []
         for i in range(len(passed)):
             now.append(passed[i] ^ subkey[i])
@@ -155,13 +182,37 @@ def get_everything_from_file(filename=r'AES.txt'):
             line = fr.readline().strip().split()
             line = list(map(lambda x: int(x, 16), line))
             column_mix_inv.append(line)
-    return rc, column_mix
+    return s, s_inv, rc, column_mix, column_mix_inv
 
 
 if __name__ == '__main__':
     everything = get_everything_from_file()
     aes = AES(*everything)
-    print(aes._s(10))
+    res = aes._column_mix([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], reverse=True)
+    print(' '.join(map(hex, res)))
+
+    exit(0)
+
+    res = aes._byte_substitute([0x11], reverse=True)[0]
+    print(num_to_bin_list(res, length=8))
+    print(hex(res))
+    exit(0)
+
+    a = GF28Object_n.from_ls(hex_str_to_bin_list('11', length=8))
+    print(a)
+    print(a.inv().to_bin_list())
+    A = [
+        [1, 0, 0, 0, 1, 1, 1, 1],
+        [1, 1, 0, 0, 0, 1, 1, 1],
+        [1, 1, 1, 0, 0, 0, 1, 1],
+        [1, 1, 1, 1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 0, 0, 0],
+        [0, 1, 1, 1, 1, 1, 0, 0],
+        [0, 0, 1, 1, 1, 1, 1, 0],
+        [0, 0, 0, 1, 1, 1, 1, 1]
+    ]
+    A = Matrix(A)
+    print(A.mul(Matrix([a.inv().to_bin_list()]).translate()))
     exit(0)
     # key = hex_str_to_byte_list(r"2b7e151628aed2a6abf7158809cf4f3c")
     # plain = hex_str_to_byte_list(r"3243f6a8885a308d313198a2e0370734")

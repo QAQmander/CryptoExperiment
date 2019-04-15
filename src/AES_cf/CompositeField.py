@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 __author__ = 'qaqmander'
 
+from src.infrastructure.util import *
+
 
 class GF2Object_n:
 
@@ -217,6 +219,10 @@ class GF28Object_n:
         ls = [0] * (8 - len(_ls)) + _ls
         return GF28Object_n([GF24Object_n.from_ls(ls[4:]), GF24Object_n.from_ls(ls[:4])])
 
+    @staticmethod
+    def from_num(_num):
+        return GF28Object_n.from_ls(num_to_bin_list(_num, length=8))
+
     def __add__(self, other):
         return GF28Object_n(self.poly + other.poly)
 
@@ -254,6 +260,9 @@ class GF28Object_n:
         s = ''.join(map(str, ls_high)).rjust(4, '0') + ''.join(map(str, ls_low)).rjust(4, '0')
         return list(map(int, s))
 
+    def to_hex_str(self):
+        return bin_list_to_hex_str(self.to_bin_list(), length=2)
+
 
 one = GF28Object_n([GF24Object_n.from_ls([1])])
 zero = GF28Object_n([GF24Object_n.from_ls([0])])
@@ -280,6 +289,35 @@ def find_generator():
 
 
 if __name__ == '__main__':
+
+
+    a = GF28Object_n.from_ls(hex_str_to_bin_list('15', length=8))
+
+    c = a.inv()
+
+    print(c.to_bin_list())
+
+    '''
+    from src.infrastructure.util import *
+    a = GF28Object_n.from_ls(hex_str_to_bin_list('71', length=8))
+    b = GF28Object_n.from_ls(hex_str_to_bin_list('15', length=8))
+
+    c = a * b
+    print(c.to_bin_list())
+    '''
+
+    '''
+    from src.infrastructure.util import *
+
+    for i in range(1 << 4):
+        if i == 0:
+            continue
+        now = GF24Object_n.from_ls(num_to_bin_list(i, length=4))
+        invert = now.inv().poly.ls
+        invert.reverse()
+        print(now, now.inv(), hex(bin_list_to_num(invert)))
+    '''
+    '''
     import pickle
 
     ls = find_generator()
@@ -297,4 +335,4 @@ if __name__ == '__main__':
             print(now.to_bin_list())
             print(now)
             now *= x
-
+    '''
