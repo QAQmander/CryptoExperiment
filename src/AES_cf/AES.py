@@ -188,6 +188,25 @@ def get_everything_from_file(filename=r'AES.txt'):
 if __name__ == '__main__':
     everything = get_everything_from_file()
     aes = AES(*everything)
+
+    key = byte_list_to_bin_list([
+        0xde, 0xad, 0xbe, 0xef,
+        0xde, 0xad, 0xbe, 0xef,
+        0xde, 0xad, 0xbe, 0xef,
+        0xde, 0xad, 0xbe, 0xef
+    ])
+    plain = byte_list_to_bin_list([
+        0x01, 0x23, 0x45, 0x67,
+        0x89, 0xab, 0xcd, 0xef,
+        0xfe, 0xdc, 0xba, 0x98,
+        0x76, 0x54, 0x32, 0x10
+    ])
+
+    aes.tell_me_the_devil_secret(key)
+
+    print(bin_list_to_byte_list(aes.encrypt(plain)))
+
+    exit(0)
     res = aes._column_mix([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], reverse=True)
     print(' '.join(map(hex, res)))
 

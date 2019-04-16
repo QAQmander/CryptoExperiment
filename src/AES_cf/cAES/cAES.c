@@ -26,39 +26,24 @@ static PyObject *wrapper_aes_delete(PyObject *self, PyObject *args) {
 }
 
 static PyObject *wrapper_aes_encrypt(PyObject *self, PyObject *args) {
-    PyObject *list = PyTuple_GetItem(args, 0);
-    if (!list) 
-	return NULL;
     uint8_t plain[0x10];
     uint8_t cipher[0x10];
     if (!my_parse_arg(plain))
 	return NULL;
 
-    int i;
-
-    for (i = 0; i < 0x10; i++) printf("%x ", a->key[i]);
-    putchar('\n');
-
-    for (i = 0; i < 0x10; i++) printf("%x ", plain[i]);
-    putchar('\n');
-
     aes_encrypt(a, plain, cipher);
-
-    for (i = 0; i < 0x10; i++) printf("%x ", cipher[i]);
-    putchar('\n');
 
     return my_build_value(cipher);
 }
 
 static PyObject *wrapper_aes_decrypt(PyObject *self, PyObject *args) {
-    PyObject *list = PyTuple_GetItem(args, 0);
-    if (!list) 
-	return NULL;
     uint8_t cipher[0x10];
     uint8_t plain[0x10];
     if (!my_parse_arg(cipher))
 	return NULL;
+
     aes_decrypt(a, cipher, plain);
+
     return my_build_value(plain);
 }
 
