@@ -1,4 +1,8 @@
+#ifdef _WIN64
+#include <Python.h>
+#else
 #include <python3.6/Python.h>
+#endif
 #include "aes.h"
 #include <stdint.h>
 #define my_parse_arg(x) PyArg_ParseTuple(args, "iiiiiiiiiiiiiiii", x + 0, x + 1, x + 2, x + 3, x + 4, x + 5, x + 6, x + 7, x + 8, x + 9, x + 10, x + 11, x + 12, x + 13, x + 14, x + 15)
