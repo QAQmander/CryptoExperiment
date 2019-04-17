@@ -10,10 +10,15 @@
 
 static aes a = NULL;
 
+static uint8_t key[20];
+
+static uint8_t plain[20];
+
+static uint8_t cipher[20];
+
 static PyObject *wrapper_aes_create(PyObject *self, PyObject *args) {
     if (a) 
 	aes_delete(a);
-    uint8_t key[0x10];
     if (!my_parse_arg(key))
 	return NULL;
     a = aes_create(key);
@@ -30,8 +35,6 @@ static PyObject *wrapper_aes_delete(PyObject *self, PyObject *args) {
 }
 
 static PyObject *wrapper_aes_encrypt(PyObject *self, PyObject *args) {
-    uint8_t plain[0x10];
-    uint8_t cipher[0x10];
     if (!my_parse_arg(plain))
 	return NULL;
 
@@ -41,8 +44,6 @@ static PyObject *wrapper_aes_encrypt(PyObject *self, PyObject *args) {
 }
 
 static PyObject *wrapper_aes_decrypt(PyObject *self, PyObject *args) {
-    uint8_t cipher[0x10];
-    uint8_t plain[0x10];
     if (!my_parse_arg(cipher))
 	return NULL;
 
