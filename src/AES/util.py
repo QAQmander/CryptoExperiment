@@ -17,6 +17,10 @@ def byte_list_output(byte_list):
     print(' '.join(temp))
 
 
+def byte_list_to_hex_str(byte_list):
+    return ''.join(map(lambda x: '{:0>2}'.format(hex(x)[2:]), byte_list))
+
+
 def byte_list_to_bin_list(byte_list):
     temp = []
     for byte in byte_list:
