@@ -3,11 +3,13 @@
 #include "BigInt.h"
 
 int main() {
-    BigInt *a = big_create_fromll(123456789);
-    BigInt *b = big_create_fromll(987654321);
-    big_output(big_oppo(a));
-    big_output(big_add(a,b));
-    big_output(big_sub(a,b));
-    big_output(big_mul(a,b));
+    BigInt *a = big_create_fromhexstr("0xdeadbeef1234567890");
+    BigInt *b = big_create_fromhexstr("0xcafebabe");
+    BigInt *r = big_create_fromll(0);
+    BigInt *q = big_div(a, b, r);
+    big_output(a);
+    big_output(b);
+    big_output(q);
+    big_output(r);
     return 0;
 }

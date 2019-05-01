@@ -57,14 +57,14 @@ extern void big_destroy(BigInt *a) {
     free(a);
 }
 
-extern BigInt *big_oppo(BigInt *a) {
+extern BigInt *big_oppo(const BigInt *a) {
     BigInt *c = (BigInt *)calloc(1, sizeof(BigInt));
     memcpy(c, a, sizeof(BigInt));
     c->sig = -a->sig;
     return c;
 }
 
-extern int big_compare(BigInt *a, BigInt *b) {
+extern int big_compare(const BigInt *a, const BigInt *b) {
     if (a->sig > b->sig) return 1;
     if (a->sig < b->sig) return -1;
     int sig = a->sig;
@@ -80,7 +80,7 @@ extern int big_compare(BigInt *a, BigInt *b) {
     return 0;
 }
 
-extern BigInt *big_add(BigInt *a, BigInt *b) {
+extern BigInt *big_add(const BigInt *a, const BigInt *b) {
     if (a->sig != b->sig) {
         BigInt *b_oppo = big_oppo(b);
         BigInt *res = big_sub(a, b_oppo);
@@ -99,7 +99,7 @@ extern BigInt *big_add(BigInt *a, BigInt *b) {
     if (c->num[c->len - 1] < a->num[c->len - 1]) {
         if (c->len < MAXLEN) c->len++;
         else {
-            puts("Error: big_add -- a and b is too large!!");
+            puts("Error: big_add -- op1 & op2 are too large!!");
             big_output(a);
             big_output(b);
             return NULL;
@@ -108,7 +108,7 @@ extern BigInt *big_add(BigInt *a, BigInt *b) {
     return c;
 }
 
-extern BigInt *big_sub(BigInt *a, BigInt *b) {
+extern BigInt *big_sub(const BigInt *a, const BigInt *b) {
     if (a->sig != b->sig) {
         BigInt *b_oppo = big_oppo(b);
         BigInt *res = big_add(a, b_oppo);
@@ -144,10 +144,10 @@ extern BigInt *big_sub(BigInt *a, BigInt *b) {
 
 static int temp_c[MAXLEN];
 
-extern BigInt *big_mul(BigInt *a, BigInt *b) {
+extern BigInt *big_mul(const BigInt *a, const BigInt *b) {
     BigInt *c = (BigInt *)calloc(1, sizeof(BigInt));
     int i, j;
-    c->len = a->len + b->len;
+    c->len = a->len + b->len - 1;
     c->sig = a->sig * b->sig;
     memset(temp_c, 0, sizeof(temp_c));
     for (i = 0; i < a->len; i++)
@@ -155,21 +155,121 @@ extern BigInt *big_mul(BigInt *a, BigInt *b) {
             if (i + j < MAXLEN)
                 temp_c[i + j] += a->num[i] * b->num[j];
             else {
-                puts("Error: big_mul -- a and b is too large!!");
+                puts("Error: big_mul -- op1 & op2 are too large!!");
                 big_output(a);
                 big_output(b);
                 return NULL;
             }
     for (i = 0; i < c->len; i++) {
         temp_c[i + 1] += temp_c[i] >> 8;
-        temp_c[i] = temp_c[i] & 0xff;
+        temp_c[i] &= 0xff;
     }
+    while (temp_c[c->len]) c->len++;
     for (i = 0; i < c->len; i++)
         c->num[i] = (uint8_t)temp_c[i];
     return c;
 }
 
-extern void big_output(BigInt *a) {
+static uint16_t temp[MAXLEN + 1];
+static int temp_len;
+
+static uint8_t big_div_tosmall(BigInt *a, const BigInt *b, int k) {
+    uint8_t *aa = a->num + k;
+    uint8_t aa_len = a->len - k;
+
+#ifdef DEBUG
+    big_output(a);
+    big_output(b);
+    int j;
+    for (j = aa_len - 1; j >= 0; j--)
+        printf("%02hx ", aa[j]);
+    putchar('\n');
+#endif
+
+    int l = 0, r = 0x100;
+    while (l < r - 1) {
+        int mid = (l + r) / 2;
+        memset(temp, 0, sizeof(temp));
+        int i;
+        for (i = 0; i < b->len; i++)
+            temp[i] = b->num[i] * mid;
+        for (i = 0; i < b->len; i++) {
+            temp[i + 1] += temp[i] >> 8;
+            temp[i] &= 0xff;
+        }
+        temp_len = temp[b->len] ? b->len + 1 : b->len;
+
+#ifdef DEBUG
+        printf("%02hd : ", mid);
+        for (j = aa_len - 1; j >= 0; j--)
+            printf("%02hx ", temp[j]);
+        putchar('\n');
+        printf("%d %d\n", temp_len, aa_len);
+#endif
+
+        if (temp_len > aa_len) r = mid;
+        else if (temp_len < aa_len) l = mid;
+        else {
+            for (i = temp_len - 1; i >= 0; i--)
+                if (temp[i] != aa[i])
+                    break;
+            if (i < 0) l = mid;
+            else if (temp[i] < aa[i]) l = mid;
+            else r = mid;
+        }
+    }
+    memset(temp, 0, sizeof(temp));
+    int i;
+    for (i = 0; i < b->len; i++)
+        temp[i] = b->num[i] * l;
+    for (i = 0; i < b->len; i++) {
+        temp[i + 1] += temp[i] >> 8;
+        temp[i] &= 0xff;
+    }
+    temp_len = temp[b->len] ? b->len + 1 : b->len;
+    for (i = 0; i < temp_len; i++) {
+        if (aa[i] < temp[i]) aa[i + 1]--;
+        aa[i] -= temp[i];
+    }
+
+#ifdef DEBUG
+    printf("%d %d\n", k, l);
+    big_output(a);
+    putchar('\n');
+#endif
+
+    while (!a->num[a->len - 1] && a->len > 1) a->len--;
+    return l;
+}
+
+extern BigInt *big_div(const BigInt *a, const BigInt *b, BigInt *r) {
+    if (a->sig < 0 || b->sig < 0) {
+        puts("Error: big_div -- op1 & op2 should be positive");
+        big_output(a);
+        big_output(b);
+        return NULL;
+    }
+    if (big_compare(a, b) < 0) {
+        memcpy(r, a, sizeof(BigInt));
+        return big_create_fromll(0);
+    }
+    BigInt *c = (BigInt *)calloc(1, sizeof(BigInt));
+    BigInt *temp_r = (BigInt *)calloc(1, sizeof(BigInt));
+    memcpy(temp_r, a, sizeof(BigInt));
+    c->len = a->len - b->len + 1;
+    c->sig = 1;
+    int i;
+    for (i = c->len - 1; i >= 0; i--) {
+        uint8_t q = big_div_tosmall(temp_r, b, i);
+        c->num[i] = q;
+    }
+    memcpy(r, temp_r, sizeof(BigInt));
+    big_destroy(temp_r);
+    while (!c->num[c->len - 1]) c->len--;
+    return c;
+}
+
+extern void big_output(const BigInt *a) {
     printf("%d ", a->len);
     if (a->sig == -1) putchar('-');
     else if (a->sig == 1) putchar('+');
