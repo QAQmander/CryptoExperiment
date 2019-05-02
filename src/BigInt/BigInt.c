@@ -99,7 +99,7 @@ extern BigInt *big_add(const BigInt *a, const BigInt *b) {
     if (c->num[c->len - 1] < a->num[c->len - 1]) {
         if (c->len < MAXLEN) c->len++;
         else {
-            puts("Error: big_add -- op1 & op2 are too large!!");
+            puts("Error: big_add -- op1 & op2 are too large");
             big_output(a);
             big_output(b);
             return NULL;
@@ -155,7 +155,7 @@ extern BigInt *big_mul(const BigInt *a, const BigInt *b) {
             if (i + j < MAXLEN)
                 temp_c[i + j] += a->num[i] * b->num[j];
             else {
-                puts("Error: big_mul -- op1 & op2 are too large!!");
+                puts("Error: big_mul -- op1 & op2 are too large");
                 big_output(a);
                 big_output(b);
                 return NULL;
@@ -244,8 +244,12 @@ static uint8_t big_div_tosmall(BigInt *a, const BigInt *b, int k) {
 
 extern BigInt *big_div(const BigInt *a, const BigInt *b, BigInt *r) {
     if (a->sig < 0 || b->sig < 0) {
-        puts("Error: big_div -- op1 & op2 should be positive");
+        puts("Error: big_div -- op1 & op2 should be non-negative");
         big_output(a);
+        big_output(b);
+        return NULL;
+    } else if (b->len == 1 && b->num[0] == 0) {
+        puts("Error: big_div -- op2 should not be ZERO");
         big_output(b);
         return NULL;
     }
@@ -267,6 +271,77 @@ extern BigInt *big_div(const BigInt *a, const BigInt *b, BigInt *r) {
     big_destroy(temp_r);
     while (!c->num[c->len - 1]) c->len--;
     return c;
+}
+
+extern BigInt *big_mod(const BigInt *a, const BigInt *b) {
+    if (a->sig < 0 || b->sig < 0) {
+        puts("Error: big_mod -- op1 & op2 should be non-negative");
+        big_output(a);
+        big_output(b);
+        return NULL;
+    } else if (b->len == 1 && b->num[0] == 0) {
+        puts("Error: big_mod -- op2 should not be ZERO");
+        big_output(b);
+        return NULL;
+    }
+    BigInt *c = (BigInt *)calloc(1, sizeof(BigInt));
+    big_div(a, b, c);
+    return c;
+}
+
+extern BigInt *big_pow(const BigInt *a, const BigInt *b) {
+    BigInt *x = (BigInt *)malloc(sizeof(BigInt));
+    BigInt *res = big_create_fromll(1ll);
+    memcpy(x, a, sizeof(BigInt));
+    int i, j;
+    for (i = 0; i < b->len; i++) {
+        uint8_t now = b->num[i];
+        for (j = 0; j < 8; j++) {
+            if (now & 1) {
+                now &= 0xfe;
+                BigInt *passed = res;
+                res = big_mul(passed, x);
+                big_destroy(passed);
+            }
+            now >>= 1;
+            BigInt *passed = x;
+            x = big_mul(passed, passed);
+            big_destroy(passed);
+        }
+    }
+    big_destroy(x);
+    return res;
+}
+
+extern BigInt *big_powmod(const BigInt *a, const BigInt *b, const BigInt *m) {
+    BigInt *x = (BigInt *)malloc(sizeof(BigInt));
+    BigInt *res = big_create_fromll(1ll);
+    memcpy(x, a, sizeof(BigInt));
+    int i, j;
+    for (i = 0; i < b->len; i++) {
+        uint8_t now = b->num[i];
+        for (j = 0; j < 8; j++) {
+            if (now & 1) {
+                now &= 0xfe;
+                BigInt *passed = res;
+                res = big_mul(passed, x);
+                big_destroy(passed);
+                passed = res;
+                res = big_mod(passed, m);
+                big_destroy(passed);
+            }
+            now >>= 1;
+            BigInt *passed = x;
+            x = big_mul(passed, passed);
+            big_destroy(passed);
+            passed = x;
+            x = big_mod(passed, m);
+            big_destroy(passed);
+        }
+    }
+    big_destroy(x);
+    return res;
+
 }
 
 extern void big_output(const BigInt *a) {

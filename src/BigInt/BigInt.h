@@ -3,7 +3,7 @@
 #define __qaqmander_BigInt
 
 #include <stdint.h>
-#define MAXLEN 2048
+#define MAXLEN 65536
 
 typedef struct {
     uint8_t num[MAXLEN];
@@ -27,6 +27,12 @@ BigInt *big_sub(const BigInt *, const BigInt *);
 BigInt *big_mul(const BigInt *, const BigInt *);
 
 BigInt *big_div(const BigInt *, const BigInt *, BigInt *);
+
+BigInt *big_mod(const BigInt *, const BigInt *);
+
+BigInt *big_pow(const BigInt *, const BigInt *);
+
+BigInt *big_powmod(const BigInt *, const BigInt *, const BigInt *);
 
 void big_output(const BigInt *);
 
