@@ -4,6 +4,8 @@
 
 from random import randint
 from src.infrastructure.PrimeJudge import miller_rabin
+from src.infrastructure.Power import pow_fast_m
+pow = pow_fast_m
 
 prime_judge = lambda x: miller_rabin(x, 500)
 from src.infrastructure.Euclid import gcd_const
