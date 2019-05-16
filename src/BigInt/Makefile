@@ -2,7 +2,7 @@
 CC=cc
 FLAG=-O3 -c -W -Wall
 
-test.out : test.o BigInt.o
+a.out : test.o BigInt.o
 	$(CC) -o $@ $^
 
 test.o : test.c BigInt.h

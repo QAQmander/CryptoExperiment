@@ -93,9 +93,14 @@ extern BigInt *big_add(const BigInt *a, const BigInt *b) {
     int i;
     for (i = 0; i < c->len; i++)
         c->num[i] = a->num[i] + b->num[i];
-    for (i = 0; i < c->len - 1; i++)
-        if (c->num[i] < a->num[i])
-            c->num[i + 1]++;
+    int flag = 0;
+    for (i = 0; i < c->len; i++) {
+        if (flag) c->num[i]++;
+        int next_flag = 0;
+        if (b->num[i] > 0 && c->num[i] <= a->num[i])
+            next_flag = 1;
+        flag = next_flag;
+    }
     if (c->num[c->len - 1] < a->num[c->len - 1]) {
         if (c->len < MAXLEN) c->len++;
         else {
@@ -135,9 +140,14 @@ extern BigInt *big_sub(const BigInt *a, const BigInt *b) {
     int i;
     for (i = 0; i < c->len; i++)
         c->num[i] = a->num[i] - b->num[i];
-    for (i = 0; i < c->len - 1; i++)
-        if (c->num[i] > a->num[i])
-            c->num[i + 1]--;
+    int flag = 0;
+    for (i = 0; i < c->len; i++) {
+        if (flag) c->num[i]--;
+        int next_flag = 0;
+        if (b->num[i] > 0 && c->num[i] >= a->num[i])
+            next_flag = 1;
+        flag = next_flag;
+    }
     while (!c->num[c->len - 1] && c->len > 1) c->len--;
     return c;
 }
@@ -176,16 +186,6 @@ static int temp_len;
 static uint8_t big_div_tosmall(BigInt *a, const BigInt *b, int k) {
     uint8_t *aa = a->num + k;
     uint8_t aa_len = a->len - k;
-
-#ifdef DEBUG
-    big_output(a);
-    big_output(b);
-    int j;
-    for (j = aa_len - 1; j >= 0; j--)
-        printf("%02hx ", aa[j]);
-    putchar('\n');
-#endif
-
     int l = 0, r = 0x100;
     while (l < r - 1) {
         int mid = (l + r) / 2;
@@ -198,15 +198,6 @@ static uint8_t big_div_tosmall(BigInt *a, const BigInt *b, int k) {
             temp[i] &= 0xff;
         }
         temp_len = temp[b->len] ? b->len + 1 : b->len;
-
-#ifdef DEBUG
-        printf("%02hd : ", mid);
-        for (j = aa_len - 1; j >= 0; j--)
-            printf("%02hx ", temp[j]);
-        putchar('\n');
-        printf("%d %d\n", temp_len, aa_len);
-#endif
-
         if (temp_len > aa_len) r = mid;
         else if (temp_len < aa_len) l = mid;
         else {
@@ -227,10 +218,26 @@ static uint8_t big_div_tosmall(BigInt *a, const BigInt *b, int k) {
         temp[i] &= 0xff;
     }
     temp_len = temp[b->len] ? b->len + 1 : b->len;
-    for (i = 0; i < temp_len; i++) {
-        if (aa[i] < temp[i]) aa[i + 1]--;
-        aa[i] -= temp[i];
+
+#ifdef DEBUG
+    big_output(a);
+    printf("+0x");
+    int j;
+    for (j = aa_len - 1; j >= 0; j--)
+        printf("%02hx", temp[j]);
+    putchar('\n');
+#endif
+
+    int flag = 0;
+    for (i = 0; i < aa_len; i++) {
+        if (flag) aa[i]--;
+        int next_flag = 0;
+        if ((flag && aa[i] == (uint8_t)0xff) || aa[i] < (uint8_t)temp[i]) 
+            next_flag = 1;
+        flag = next_flag;
+        aa[i] -= (uint8_t)temp[i];
     }
+    while (!a->num[a->len - 1] && a->len > 1) a->len--;
 
 #ifdef DEBUG
     printf("%d %d\n", k, l);
@@ -238,7 +245,6 @@ static uint8_t big_div_tosmall(BigInt *a, const BigInt *b, int k) {
     putchar('\n');
 #endif
 
-    while (!a->num[a->len - 1] && a->len > 1) a->len--;
     return l;
 }
 
@@ -329,6 +335,8 @@ extern BigInt *big_powmod(const BigInt *a, const BigInt *b, const BigInt *m) {
                 passed = res;
                 res = big_mod(passed, m);
                 big_destroy(passed);
+                //printf("j=%d: res=", j);
+                //big_output(res);
             }
             now >>= 1;
             BigInt *passed = x;
@@ -337,6 +345,8 @@ extern BigInt *big_powmod(const BigInt *a, const BigInt *b, const BigInt *m) {
             passed = x;
             x = big_mod(passed, m);
             big_destroy(passed);
+            //printf("i=%d: x=", i);
+            //big_output(x);
         }
     }
     big_destroy(x);
@@ -345,7 +355,7 @@ extern BigInt *big_powmod(const BigInt *a, const BigInt *b, const BigInt *m) {
 }
 
 extern void big_output(const BigInt *a) {
-    printf("%d ", a->len);
+    //printf("%d ", a->len);
     if (a->sig == -1) putchar('-');
     else if (a->sig == 1) putchar('+');
     int i = 0;

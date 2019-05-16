@@ -2,12 +2,16 @@
 #include <stdint.h>
 #include "BigInt.h"
 
+char s[1000];
+
 int main() {
-    // BigInt *a = big_create_fromhexstr("0x1234567890");
-    // BigInt *b = big_create_fromhexstr("0x1234");
-    BigInt *a = big_create_fromll(100);
-    BigInt *b = big_create_fromll(300);
-    BigInt *c = big_create_fromll(100000007ll);
-    big_output(big_powmod(a,b,c));
+    gets(s);
+    BigInt *a = big_create_fromhexstr(s);
+    gets(s);
+    BigInt *b = big_create_fromhexstr(s);
+    gets(s);
+    BigInt *c = big_create_fromhexstr(s);
+    BigInt *d = big_powmod(a, b, c);
+    big_output(d);
     return 0;
 }
