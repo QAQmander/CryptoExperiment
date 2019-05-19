@@ -47,8 +47,8 @@ class SM2(object):
     def eccpoint2str(p):
         assert (p.__class__ == EccPoint)
         assert (p != INFINITE)
-        x_str = hex(p.get_x())[2:].rjust(COOR_LENGTH, '0')
-        y_str = hex(p.get_y())[2:].rjust(COOR_LENGTH, '0')
+        x_str = hex(p.get_x())[2:].rjust(2 * COOR_LENGTH, '0')
+        y_str = hex(p.get_y())[2:].rjust(2 * COOR_LENGTH, '0')
         return x_str, y_str
 
     @staticmethod
@@ -60,8 +60,8 @@ class SM2(object):
     # plain: normal ascii str
     # ret value: byte array
     def encrypt(self, plain):
-        k = randint(1, 16 ** COOR_LENGTH - 1)
-        k = 0x384F30353073AEECE7A1654330A96204D37982A3E15B2CB5
+        k = randint(1, 256 ** COOR_LENGTH - 1)
+        print(k)
         p1 = self.g * k
         x1_str, y1_str = SM2.eccpoint2str(p1)
         pc = r'04'
