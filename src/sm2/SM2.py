@@ -61,7 +61,7 @@ class SM2(object):
     # ret value: byte array
     def encrypt(self, plain):
         k = randint(1, 256 ** COOR_LENGTH - 1)
-        print(k)
+        # print(k)
         p1 = self.g * k
         x1_str, y1_str = SM2.eccpoint2str(p1)
         pc = r'04'
