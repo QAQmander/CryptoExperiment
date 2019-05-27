@@ -106,7 +106,7 @@ def output(a: np.ndarray) -> None:
 
 
 if __name__ == '__main__':
-    a = [1, 1, 0, 0, 0, 1, 0, 1] * 200
+    a = [1, 1, 0, 0, 0, 1, 0, 1] * 200 * 100
     a = np.array(a)
     b = sha3_224(a)
     output(b)
