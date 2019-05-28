@@ -2,6 +2,7 @@
 
 import numpy as np
 from src.sha3.sha3 import sha3_224 as sha3_224_orig
+from src.sha3.sha3 import sha3_384 as sha3_384_orig
 
 
 def md5(message: bytes) -> bytes:
@@ -18,6 +19,21 @@ def sha3_224(input: bytes) -> bytes:
         temp.reverse()
         input_bin_list += list(temp)
     output_bin_list = list(sha3_224_orig(np.array(input_bin_list)))
+    output_bytearray = bytearray()
+    for i in range(len(output_bin_list) // 8):
+        temp = output_bin_list[8 * i: 8 * (i + 1)]
+        temp.reverse()
+        output_bytearray.append(int(''.join(map(str, temp)), 2))
+    return bytes(output_bytearray)
+
+
+def sha3_384(input: bytes) -> bytes:
+    input_bin_list = []
+    for byte in input:
+        temp = list(map(int, bin(byte)[2:].rjust(8, '0')))
+        temp.reverse()
+        input_bin_list += list(temp)
+    output_bin_list = list(sha3_384_orig(np.array(input_bin_list)))
     output_bytearray = bytearray()
     for i in range(len(output_bin_list) // 8):
         temp = output_bin_list[8 * i: 8 * (i + 1)]
@@ -57,14 +73,14 @@ class Hmac(object):
         key_with_text = key_after_xor + message  # type: bytes
         after_hash = self.hash_func(key_with_text)
 
-        output(key_with_text)
-
+        """
         import hashlib
-        a = hashlib.sha3_224()
+        a = hashlib.sha3_384()
         a.update(key_with_text)
         output(a.digest())
 
         output(self.hash_func(key_with_text))
+        """
 
         key_after_append2 = self.key.ljust(self.B, b'\x00')
         key_after_xor2 = bytes(map(lambda x, y: x ^ y,
@@ -79,6 +95,14 @@ def with_sha3_224(key: bytes, message: bytes) -> bytes:
     B = 144
     L = 28
     hmac = Hmac(B, L, sha3_224)
+    hmac.tell_me_the_devil_secret(key)
+    return hmac.calc_mac(message)
+
+
+def with_sha3_384(key: bytes, message: bytes) -> bytes:
+    B = 104
+    L = 48
+    hmac = Hmac(B, L, sha3_384)
     hmac.tell_me_the_devil_secret(key)
     return hmac.calc_mac(message)
 
@@ -111,17 +135,34 @@ def output(message: bytes) -> None:
 
 
 if __name__ == '__main__':
-    """
     assert(with_md5(b'\xAA' * 16, b'\xDD' * 50) == b'V\xbe4R\x1d\x14L\x88\xdb\xb8\xc73\xf0\xe8\xb3\xf6')
     import doctest
     doctest.testmod()
-    """
-    key = ''
+
+    key1 = ''
     for i in range(0x00, 0x1b + 1):
-        key += chr(i)
-    key = key.encode('ascii')
-    # print(key)
+        key1 += chr(i)
+    key1 = key1.encode('ascii')
+    message1 = b'Sample message for keylen<blocklen'
+    mac1 = with_sha3_224(key1, message1)
+    mac1_ans = b'3,\xfdY4\x7f\xdb\x8eWnw&\x0b\xe4\xab\xa2\xd6\xdcS\x11{;\xfbR\xc6\xd1\x8c\x04'
+    assert(mac1 == mac1_ans)
 
-    message = b'Sample message for keylen<blocklen'
+    key2 = bytearray()
+    for i in range(0x00, 0x8f + 1):
+        key2.append(i)
+    key2 = bytes(key2)
+    message2 = b'Sample message for keylen=blocklen'
+    mac2 = with_sha3_224(key2, message2)
+    mac2_ans = b'\xd8\xb73\xbc\xf6ldJ\x122=VN$\xdc\xf3\xfcu\xf21\xf3\xb6yh5\x91\x00\xc7'
+    assert(mac2 == mac2_ans)
 
-    print(with_sha3_224(key, message))
+    key3 = ''
+    for i in range(0x00, 0x67 + 1):
+        key3 += chr(i)
+    key3 = key3.encode('ascii')
+    message3 = b'Sample message for keylen=blocklen'
+    mac3 = with_sha3_384(key3, message3)
+    mac3_ans = b'\xa2}$\xb5\x92\xe8\xc8\xcb\xf6\xd4\xceo\xc5\xbfb\xd8\xfc\x98\xbf-Hf@\xd9\xeb' \
+               b'\x80\x99\xe2@G\x83\x7f_;\xff\xbe\x92\xdc\xce\x90\xb4\xed[\x1e~D\xfa\x90'
+    assert(mac3 == mac3_ans)
