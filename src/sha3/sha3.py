@@ -94,6 +94,24 @@ def sha3_512(M: np.ndarray) -> np.ndarray:
     return keccak(1024)(temp, 512)
 
 
+def wrapper(hash_func):
+    def ret(input: bytes) -> bytes:
+        input_bin_list = []
+        for byte in input:
+            temp = list(map(int, bin(byte)[2:].rjust(8, '0')))
+            temp.reverse()
+            input_bin_list += list(temp)
+        output_bin_list = list(hash_func(np.array(input_bin_list)))
+        output_bytearray = bytearray()
+        for i in range(len(output_bin_list) // 8):
+            temp = output_bin_list[8 * i: 8 * (i + 1)]
+            temp.reverse()
+            output_bytearray.append(int(''.join(map(str, temp)), 2))
+        return bytes(output_bytearray)
+
+    return ret
+
+
 def output(a: np.ndarray) -> None:
     assert (len(a.shape) == 1)
     assert (a.size % 8 == 0)
