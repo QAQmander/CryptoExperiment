@@ -16,12 +16,12 @@ def sha3_224_fast(message: bytes) -> bytes:
     s.update(message)
     return s.digest()
 
+
 class BirthdayAttack(object):
     try_length = 144
 
-    def __init__(self, hash_func, output_length):
+    def __init__(self, hash_func):
         self.hash_func = hash_func
-        self.output_length = output_length
 
     def attack(self, target_length):
         target = int(sqrt(256 ** target_length))
@@ -52,7 +52,7 @@ class BirthdayAttack(object):
 if __name__ == '__main__':
     hash_func = sha3_224_fast
     target_length = 4
-    b = BirthdayAttack(hash_func, 28)
+    b = BirthdayAttack(hash_func)
     col1, col2 = b.attack(target_length)
     hash1, hash2 = hash_func(col1), hash_func(col2)
     print(col1)
@@ -60,4 +60,4 @@ if __name__ == '__main__':
     output(hash1)
     output(hash2)
 
-    assert(hash1[:target_length] == hash2[:target_length])
+    assert (hash1[:target_length] == hash2[:target_length])
