@@ -29,8 +29,8 @@ class Hmac(object):
     def __init__(self, B, L, hash_func):
         """
 
-        :param B: int, block size in byte, namely 200 for all sha3
-        :param L: int, output size in byte, namely 28 for sha3_224
+        :param B: int, block size in bytes, namely 144 for all sha3_224
+        :param L: int, output size in bytes, namely 28 for sha3_224
         :param hash_func: bytes -> bytes,
                           hash function, namely sha3_224
         """
@@ -61,8 +61,8 @@ class Hmac(object):
         return ret
 
 
-def with_sha3(key: bytes, message: bytes) -> bytes:
-    B = 200
+def with_sha3_224(key: bytes, message: bytes) -> bytes:
+    B = 144
     L = 28
     hmac = Hmac(B, L, sha3_224)
     hmac.tell_me_the_devil_secret(key)
