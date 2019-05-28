@@ -14,11 +14,15 @@ def md5(message: bytes) -> bytes:
 def sha3_224(input: bytes) -> bytes:
     input_bin_list = []
     for byte in input:
-        input_bin_list += list(map(int, bin(byte)[2:].rjust(8, '0')))
+        temp = list(map(int, bin(byte)[2:].rjust(8, '0')))
+        temp.reverse()
+        input_bin_list += list(temp)
     output_bin_list = list(sha3_224_orig(np.array(input_bin_list)))
     output_bytearray = bytearray()
     for i in range(len(output_bin_list) // 8):
-        output_bytearray.append(int(''.join(map(str, output_bin_list[8 * i: 8 * (i + 1)])), 2))
+        temp = output_bin_list[8 * i: 8 * (i + 1)]
+        temp.reverse()
+        output_bytearray.append(int(''.join(map(str, temp)), 2))
     return bytes(output_bytearray)
 
 
@@ -50,8 +54,18 @@ class Hmac(object):
         key_after_xor = bytes(map(lambda x, y: x ^ y,
                                   key_after_append,
                                   Hmac.ipad_unit * self.B))
-        key_with_text = key_after_xor + message
+        key_with_text = key_after_xor + message  # type: bytes
         after_hash = self.hash_func(key_with_text)
+
+        output(key_with_text)
+
+        import hashlib
+        a = hashlib.sha3_224()
+        a.update(key_with_text)
+        output(a.digest())
+
+        output(self.hash_func(key_with_text))
+
         key_after_append2 = self.key.ljust(self.B, b'\x00')
         key_after_xor2 = bytes(map(lambda x, y: x ^ y,
                                    key_after_append2,
@@ -85,7 +99,29 @@ def with_md5(key: bytes, message: bytes) -> bytes:
     return hmac.calc_mac(message)
 
 
+def output(message: bytes) -> None:
+    temp = list(map(lambda x: hex(x)[2:].rjust(2, '0'), bytearray(message)))
+    for i in range(len(temp)):
+        if i % 16 == 0:
+            print('{:3}: '.format(i), end='')
+        print(temp[i], end=' ')
+        if i % 16 == 15:
+            print()
+    print()
+
+
 if __name__ == '__main__':
+    """
     assert(with_md5(b'\xAA' * 16, b'\xDD' * 50) == b'V\xbe4R\x1d\x14L\x88\xdb\xb8\xc73\xf0\xe8\xb3\xf6')
     import doctest
     doctest.testmod()
+    """
+    key = ''
+    for i in range(0x00, 0x1b + 1):
+        key += chr(i)
+    key = key.encode('ascii')
+    # print(key)
+
+    message = b'Sample message for keylen<blocklen'
+
+    print(with_sha3_224(key, message))
